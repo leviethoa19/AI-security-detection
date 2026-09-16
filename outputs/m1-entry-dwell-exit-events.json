@@ -1,0 +1,92 @@
+[
+  {
+    "schemaVersion": "1.0",
+    "eventId": "b185980a-1693-5f80-b7e5-0f5a99b201cb",
+    "incidentId": "b2aa2a77-9cac-508a-8027-3f2ccbcfeef1",
+    "cameraId": "camera-demo-01",
+    "trackId": "7",
+    "zoneId": null,
+    "eventType": "person_observed",
+    "riskLevel": 1,
+    "occurredAt": "2026-09-16T00:00:00Z",
+    "sourceTimeMs": 0,
+    "armed": true,
+    "reasonCodes": [
+      "person_present"
+    ],
+    "components": {
+      "detector": "scripted-v1",
+      "tracker": "scripted-v1",
+      "riskEngine": "rules-v1",
+      "configuration": "golden-entry-v1"
+    }
+  },
+  {
+    "schemaVersion": "1.0",
+    "eventId": "58cb8ddd-1b99-5527-b826-233f904577ab",
+    "incidentId": "b2aa2a77-9cac-508a-8027-3f2ccbcfeef1",
+    "cameraId": "camera-demo-01",
+    "trackId": "7",
+    "zoneId": "rear-entry",
+    "eventType": "zone_intrusion",
+    "riskLevel": 2,
+    "occurredAt": "2026-09-16T00:00:00.500000Z",
+    "sourceTimeMs": 500,
+    "armed": true,
+    "reasonCodes": [
+      "person_present",
+      "armed_zone_entry"
+    ],
+    "components": {
+      "detector": "scripted-v1",
+      "tracker": "scripted-v1",
+      "riskEngine": "rules-v1",
+      "configuration": "golden-entry-v1"
+    }
+  },
+  {
+    "schemaVersion": "1.0",
+    "eventId": "97a90b1a-0f1d-5233-b18d-50827df08e4f",
+    "incidentId": "b2aa2a77-9cac-508a-8027-3f2ccbcfeef1",
+    "cameraId": "camera-demo-01",
+    "trackId": "7",
+    "zoneId": "rear-entry",
+    "eventType": "extended_presence",
+    "riskLevel": 3,
+    "occurredAt": "2026-09-16T00:00:01.500000Z",
+    "sourceTimeMs": 1500,
+    "armed": true,
+    "reasonCodes": [
+      "dwell_threshold_exceeded"
+    ],
+    "components": {
+      "detector": "scripted-v1",
+      "tracker": "scripted-v1",
+      "riskEngine": "rules-v1",
+      "configuration": "golden-entry-v1"
+    }
+  },
+  {
+    "schemaVersion": "1.0",
+    "eventId": "07f51a48-12e4-57a8-9e5f-a72933fed028",
+    "incidentId": "b2aa2a77-9cac-508a-8027-3f2ccbcfeef1",
+    "cameraId": "camera-demo-01",
+    "trackId": "7",
+    "zoneId": "rear-entry",
+    "eventType": "incident_resolved",
+    "riskLevel": 0,
+    "occurredAt": "2026-09-16T00:00:03.500000Z",
+    "sourceTimeMs": 3500,
+    "armed": true,
+    "reasonCodes": [
+      "track_left_scene",
+      "resolution_grace_elapsed"
+    ],
+    "components": {
+      "detector": "scripted-v1",
+      "tracker": "scripted-v1",
+      "riskEngine": "rules-v1",
+      "configuration": "golden-entry-v1"
+    }
+  }
+]

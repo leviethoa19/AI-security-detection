@@ -1,0 +1,136 @@
+[
+  {
+    "schemaVersion": "1.0",
+    "eventId": "f981c490-c5fe-5165-ad1a-4fc5b1346ac3",
+    "incidentId": "9a576758-745e-5096-9944-3ec2d5c44613",
+    "cameraId": "camera-demo-01",
+    "trackId": "0",
+    "zoneId": null,
+    "eventType": "person_observed",
+    "riskLevel": 1,
+    "occurredAt": "2026-01-01T00:00:00.100000Z",
+    "sourceTimeMs": 100,
+    "armed": true,
+    "reasonCodes": [
+      "person_present"
+    ],
+    "components": {
+      "detector": "torchvision-ssdlite320",
+      "tracker": "bytetrack-trackers-2.6",
+      "riskEngine": "rules-v1",
+      "configuration": "video-default-v1"
+    }
+  },
+  {
+    "schemaVersion": "1.0",
+    "eventId": "689edc74-7375-5be3-abac-72548400e4fd",
+    "incidentId": "9a576758-745e-5096-9944-3ec2d5c44613",
+    "cameraId": "camera-demo-01",
+    "trackId": "0",
+    "zoneId": "protected-zone",
+    "eventType": "zone_intrusion",
+    "riskLevel": 2,
+    "occurredAt": "2026-01-01T00:00:00.100000Z",
+    "sourceTimeMs": 100,
+    "armed": true,
+    "reasonCodes": [
+      "person_present",
+      "armed_zone_entry"
+    ],
+    "components": {
+      "detector": "torchvision-ssdlite320",
+      "tracker": "bytetrack-trackers-2.6",
+      "riskEngine": "rules-v1",
+      "configuration": "video-default-v1"
+    }
+  },
+  {
+    "schemaVersion": "1.0",
+    "eventId": "5501f062-1a94-5f47-8855-15f0e3ff1cd4",
+    "incidentId": "30b01213-6310-5415-a2a1-7bd88c1cc096",
+    "cameraId": "camera-demo-01",
+    "trackId": "1",
+    "zoneId": null,
+    "eventType": "person_observed",
+    "riskLevel": 1,
+    "occurredAt": "2026-01-01T00:00:00.100000Z",
+    "sourceTimeMs": 100,
+    "armed": true,
+    "reasonCodes": [
+      "person_present"
+    ],
+    "components": {
+      "detector": "torchvision-ssdlite320",
+      "tracker": "bytetrack-trackers-2.6",
+      "riskEngine": "rules-v1",
+      "configuration": "video-default-v1"
+    }
+  },
+  {
+    "schemaVersion": "1.0",
+    "eventId": "be01ae73-4ab5-5cd3-9449-3a269762b161",
+    "incidentId": "30b01213-6310-5415-a2a1-7bd88c1cc096",
+    "cameraId": "camera-demo-01",
+    "trackId": "1",
+    "zoneId": "protected-zone",
+    "eventType": "zone_intrusion",
+    "riskLevel": 2,
+    "occurredAt": "2026-01-01T00:00:00.100000Z",
+    "sourceTimeMs": 100,
+    "armed": true,
+    "reasonCodes": [
+      "person_present",
+      "armed_zone_entry"
+    ],
+    "components": {
+      "detector": "torchvision-ssdlite320",
+      "tracker": "bytetrack-trackers-2.6",
+      "riskEngine": "rules-v1",
+      "configuration": "video-default-v1"
+    }
+  },
+  {
+    "schemaVersion": "1.0",
+    "eventId": "ba41b34b-e9dd-5d08-8c6a-abd3f7ee14dc",
+    "incidentId": "9a576758-745e-5096-9944-3ec2d5c44613",
+    "cameraId": "camera-demo-01",
+    "trackId": "0",
+    "zoneId": "protected-zone",
+    "eventType": "extended_presence",
+    "riskLevel": 3,
+    "occurredAt": "2026-01-01T00:00:02.100000Z",
+    "sourceTimeMs": 2100,
+    "armed": true,
+    "reasonCodes": [
+      "dwell_threshold_exceeded"
+    ],
+    "components": {
+      "detector": "torchvision-ssdlite320",
+      "tracker": "bytetrack-trackers-2.6",
+      "riskEngine": "rules-v1",
+      "configuration": "video-default-v1"
+    }
+  },
+  {
+    "schemaVersion": "1.0",
+    "eventId": "90bba580-1205-5a04-a12a-12acb071e684",
+    "incidentId": "30b01213-6310-5415-a2a1-7bd88c1cc096",
+    "cameraId": "camera-demo-01",
+    "trackId": "1",
+    "zoneId": "protected-zone",
+    "eventType": "extended_presence",
+    "riskLevel": 3,
+    "occurredAt": "2026-01-01T00:00:02.100000Z",
+    "sourceTimeMs": 2100,
+    "armed": true,
+    "reasonCodes": [
+      "dwell_threshold_exceeded"
+    ],
+    "components": {
+      "detector": "torchvision-ssdlite320",
+      "tracker": "bytetrack-trackers-2.6",
+      "riskEngine": "rules-v1",
+      "configuration": "video-default-v1"
+    }
+  }
+]

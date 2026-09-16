@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://security-ai.local/contracts/incident-event.v1.schema.json",
+  "title": "IncidentEventV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "incidentId",
+    "cameraId",
+    "trackId",
+    "eventType",
+    "riskLevel",
+    "occurredAt",
+    "sourceTimeMs",
+    "armed",
+    "reasonCodes",
+    "components"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "eventId": { "type": "string", "format": "uuid" },
+    "incidentId": { "type": "string", "format": "uuid" },
+    "cameraId": { "type": "string", "minLength": 1 },
+    "trackId": { "type": "string", "minLength": 1 },
+    "zoneId": { "type": ["string", "null"] },
+    "eventType": {
+      "enum": [
+        "person_observed",
+        "zone_intrusion",
+        "extended_presence",
+        "high_risk_evidence",
+        "incident_resolved"
+      ]
+    },
+    "riskLevel": { "type": "integer", "minimum": 0, "maximum": 4 },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "sourceTimeMs": { "type": "integer", "minimum": 0 },
+    "armed": { "type": "boolean" },
+    "reasonCodes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "person_present",
+          "armed_zone_entry",
+          "dwell_threshold_exceeded",
+          "persistent_high_risk_visual_evidence",
+          "track_left_scene",
+          "resolution_grace_elapsed"
+        ]
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "meanScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "maxScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "positiveFrames": { "type": "integer", "minimum": 0 },
+        "windowFrames": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "components": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detector", "tracker", "riskEngine", "configuration"],
+      "properties": {
+        "detector": { "type": "string", "minLength": 1 },
+        "tracker": { "type": "string", "minLength": 1 },
+        "riskEngine": { "type": "string", "minLength": 1 },
+        "configuration": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
+

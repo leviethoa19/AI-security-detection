@@ -1,0 +1,14 @@
+{
+  "model": "torchvision-ssdlite320",
+  "device": "cpu",
+  "tracker": "bytetrack-trackers-2.6",
+  "input_frames": 40,
+  "processed_frames": 40,
+  "source_fps": 10.0,
+  "mean_detection_ms": 46.69503500017527,
+  "p95_detection_ms": 58.06899999897723,
+  "effective_fps": 19.65556955794747,
+  "detected_person_boxes": 80,
+  "emitted_track_boxes": 78,
+  "emitted_events": 6
+}

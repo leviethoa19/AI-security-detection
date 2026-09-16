@@ -1,0 +1,23 @@
+{
+  "scenarioId": "entry-dwell-exit",
+  "cameraId": "camera-demo-01",
+  "startedAt": "2026-09-16T00:00:00Z",
+  "armed": true,
+  "zone": {
+    "zoneId": "rear-entry",
+    "polygon": [[50, 50], [100, 50], [100, 100], [50, 100]]
+  },
+  "configuration": {
+    "dwellThresholdMs": 1000,
+    "resolutionGraceMs": 1000,
+    "configurationVersion": "golden-entry-v1"
+  },
+  "frames": [
+    {"sourceTimeMs": 0, "tracks": [{"trackId": "7", "box": [0, 0, 20, 40]}]},
+    {"sourceTimeMs": 500, "tracks": [{"trackId": "7", "box": [60, 20, 80, 70]}]},
+    {"sourceTimeMs": 1500, "tracks": [{"trackId": "7", "box": [62, 20, 82, 72]}]},
+    {"sourceTimeMs": 2500, "tracks": [{"trackId": "7", "box": [110, 20, 130, 70]}]},
+    {"sourceTimeMs": 3500, "tracks": [{"trackId": "7", "box": [115, 20, 135, 70]}]}
+  ]
+}
+
