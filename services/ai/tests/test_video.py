@@ -6,7 +6,14 @@ import cv2
 import numpy as np
 from numpy.typing import NDArray
 
-from security_ai.domain import BoundingBox, Detection, Point, TrackObservation, Zone
+from security_ai.domain import (
+    BoundingBox,
+    Detection,
+    HighRiskDetection,
+    Point,
+    TrackObservation,
+    Zone,
+)
 from security_ai.video import process_video
 
 
@@ -33,6 +40,14 @@ class ScriptedTracker:
         )
 
 
+class ScriptedHighRiskDetector:
+    version = "scripted-firearm-like-test"
+    device_name = "cpu"
+
+    def detect(self, frame: NDArray[np.uint8]) -> tuple[HighRiskDetection, ...]:
+        return (HighRiskDetection(BoundingBox(38, 45, 52, 60), 0.8),)
+
+
 def test_video_pipeline_writes_overlay_and_events(tmp_path: Path) -> None:
     input_path = tmp_path / "input.mp4"
     output_path = tmp_path / "annotated.mp4"
@@ -53,15 +68,19 @@ def test_video_pipeline_writes_overlay_and_events(tmp_path: Path) -> None:
         evidence_dir=evidence_dir,
         evidence_pre_ms=100,
         evidence_post_ms=100,
+        high_risk_detector=ScriptedHighRiskDetector(),
     )
 
     assert output_path.exists()
     assert output_path.stat().st_size > 0
     assert result.metrics.processed_frames == 4
     assert len(result.incidents) == 1
-    assert result.incidents[0]["status"] == "active"
+    assert result.incidents[0]["status"] == "escalated"
+    assert result.incidents[0]["peakRiskLevel"] == 4
     assert len(result.evidence) == 1
     assert Path(result.evidence[0].clip_path).exists()
+    assert result.metrics.high_risk_detection_boxes == 4
+    assert sum(event["eventType"] == "high_risk_evidence" for event in result.events) == 1
     assert result.metrics.detected_person_boxes == 4
     assert [event["eventType"] for event in result.events[:2]] == [
         "person_observed",

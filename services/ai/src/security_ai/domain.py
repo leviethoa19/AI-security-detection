@@ -39,9 +39,25 @@ class Detection:
 
 
 @dataclass(frozen=True, slots=True)
+class HighRiskDetection:
+    box: BoundingBox
+    score: float
+    label: str = "firearm_like"
+
+
+@dataclass(frozen=True, slots=True)
+class HighRiskEvidenceObservation:
+    track_id: str
+    box: BoundingBox
+    score: float
+    label: str = "firearm_like"
+
+
+@dataclass(frozen=True, slots=True)
 class FrameObservation:
     source_time_ms: int
     tracks: tuple[TrackObservation, ...]
+    high_risk_evidence: tuple[HighRiskEvidenceObservation, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,8 +72,12 @@ class ReplayConfiguration:
     resolution_grace_ms: int = 1_000
     evidence_pre_ms: int = 2_000
     evidence_post_ms: int = 2_000
+    high_risk_window_ms: int = 1_500
+    high_risk_min_positive_frames: int = 3
+    high_risk_min_mean_score: float = 0.25
     detector_version: str = "scripted-v1"
     tracker_version: str = "scripted-v1"
+    high_risk_detector_version: str = "disabled"
     risk_engine_version: str = "rules-v1"
     configuration_version: str = "golden-default-v1"
 

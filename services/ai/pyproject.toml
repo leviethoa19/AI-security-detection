@@ -15,6 +15,8 @@ dependencies = [
 security-ai-replay = "security_ai.replay:main"
 security-ai-video = "security_ai.video:main"
 security-ai-benchmark = "security_ai.benchmark:main"
+security-ai-high-risk-eval = "security_ai.high_risk_eval:main"
+security-ai-open-images-manifest = "security_ai.open_images:main"
 
 [project.optional-dependencies]
 dev = [
@@ -29,6 +31,10 @@ vision = [
   "torch>=2.8,<2.14",
   "torchvision>=0.23,<0.29",
   "trackers>=2.6,<3",
+]
+high-risk = [
+  "safetensors>=0.5,<1",
+  "transformers>=4.49,<6",
 ]
 
 [tool.pytest.ini_options]
@@ -55,6 +61,8 @@ module = [
   "supervision.*",
   "trackers",
   "trackers.*",
+  "transformers",
+  "transformers.*",
   "torchvision",
   "torchvision.models",
   "torchvision.models.detection",

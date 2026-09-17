@@ -74,9 +74,20 @@ Generated evidence remains local and excluded from Git. A short source ending be
 
 ## M4 — High-risk-object evidence baseline
 
-**Status:** Next
+**Status:** In progress
 
-The next slice will establish dataset provenance and measure a firearm-like-object baseline before deciding whether targeted fine-tuning is justified.
+The firearm-only slice now has a replaceable open-vocabulary detector, person-track association, temporal persistence, threshold evaluation, and a provenance-preserving Open Images manifest builder.
+
+- [x] Firearm-only class scope and uncertainty-aware product language
+- [x] Replaceable PyTorch/Transformers zero-shot detector adapter
+- [x] Firearm-like detection to person-track association
+- [x] Sliding-window persistence before Risk 4 escalation
+- [x] One-frame evidence regression test
+- [x] Threshold/IoU evaluation harness
+- [x] Open Images V7 class mapping and provenance manifest builder
+- [ ] Download the approved model and bounded evaluation subset
+- [ ] Measure threshold, latency, precision, recall, and failure groups
+- [ ] Decide whether M6 fine-tuning is justified
 
 ## M5–M9
 

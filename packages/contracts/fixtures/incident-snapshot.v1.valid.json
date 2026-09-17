@@ -53,6 +53,9 @@
     "dwellThresholdMs": 1000,
     "resolutionGraceMs": 1000,
     "evidencePreMs": 2000,
-    "evidencePostMs": 2000
+    "evidencePostMs": 2000,
+    "highRiskWindowMs": 1500,
+    "highRiskMinPositiveFrames": 3,
+    "highRiskMinMeanScore": 0.25
   }
 }

@@ -60,6 +60,9 @@ def _open_snapshot(
             "resolutionGraceMs": configuration.resolution_grace_ms,
             "evidencePreMs": configuration.evidence_pre_ms,
             "evidencePostMs": configuration.evidence_post_ms,
+            "highRiskWindowMs": configuration.high_risk_window_ms,
+            "highRiskMinPositiveFrames": configuration.high_risk_min_positive_frames,
+            "highRiskMinMeanScore": configuration.high_risk_min_mean_score,
         },
     }
 

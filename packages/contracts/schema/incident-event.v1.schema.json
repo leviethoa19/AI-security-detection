@@ -29,6 +29,7 @@
       "properties": {
         "detector": { "type": "string", "minLength": 1 },
         "tracker": { "type": "string", "minLength": 1 },
+        "highRiskDetector": { "type": "string", "minLength": 1 },
         "riskEngine": { "type": "string", "minLength": 1 },
         "configuration": { "type": "string", "minLength": 1 }
       }

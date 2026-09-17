@@ -78,6 +78,21 @@ python -m security_ai.video input.mp4 \
 
 The evidence directory contains one short clip, trigger-adjacent thumbnail, and manifest per opened incident. It never contains continuous source video and is excluded from Git.
 
+M4 adds an optional zero-shot firearm-like evidence baseline. Install it only when running that experiment; the first run downloads approximately 620 MB of Apache-2.0 safetensors weights:
+
+```sh
+python -m pip install -e "services/ai[dev,vision,high-risk]"
+python -m security_ai.video input.mp4 \
+  --output-video artifacts/annotated.mp4 \
+  --output-events artifacts/events.json \
+  --output-incidents artifacts/incidents.json \
+  --output-metrics artifacts/metrics.json \
+  --evidence-dir artifacts/evidence \
+  --high-risk-model owlv2-base
+```
+
+The UI and records describe these outputs as potential firearm-like visual evidence. Risk 4 requires repeated evidence associated with a tracked person in an armed zone; a single frame is insufficient.
+
 On Windows, clone to a short directory or create the virtual environment at a short path; large PyTorch wheels can exceed the legacy path-length limit in deeply nested directories.
 
 ## Data and safety

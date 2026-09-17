@@ -40,6 +40,7 @@ export interface IncidentEventV1 {
   components: {
     detector: string;
     tracker: string;
+    highRiskDetector?: string;
     riskEngine: string;
     configuration: string;
   };
@@ -77,6 +78,9 @@ export interface IncidentSnapshotV1 {
     resolutionGraceMs: number;
     evidencePreMs: number;
     evidencePostMs: number;
+    highRiskWindowMs: number;
+    highRiskMinPositiveFrames: number;
+    highRiskMinMeanScore: number;
   };
 }
 

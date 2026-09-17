@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections import deque
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -13,6 +14,7 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from security_ai.contracts import validate_incident_event
 from security_ai.domain import (
     FrameObservation,
+    HighRiskEvidenceObservation,
     ReplayConfiguration,
     ReplayScenario,
     TrackObservation,
@@ -33,6 +35,8 @@ class _TrackState:
     outside_since_ms: int | None = None
     intrusion_active: bool = False
     dwell_emitted: bool = False
+    high_risk_emitted: bool = False
+    evidence_window: deque[tuple[int, float | None]] | None = None
 
 
 class ReplayEngine:
@@ -62,8 +66,15 @@ class ReplayEngine:
             raise ValueError("frames must be ordered by source_time_ms")
         event_offset = len(self._events)
         observed_ids = {track.track_id for track in frame.tracks}
+        evidence_by_track: dict[str, list[HighRiskEvidenceObservation]] = {}
+        for evidence in frame.high_risk_evidence:
+            evidence_by_track.setdefault(evidence.track_id, []).append(evidence)
         for track in frame.tracks:
-            self._observe(track, frame.source_time_ms)
+            self._observe(
+                track,
+                frame.source_time_ms,
+                tuple(evidence_by_track.get(track.track_id, ())),
+            )
         self._advance_unobserved(observed_ids, frame.source_time_ms)
         self._last_source_time_ms = frame.source_time_ms
         return list(self._events[event_offset:])
@@ -75,13 +86,19 @@ class ReplayEngine:
     def incident_snapshots(self) -> list[dict[str, Any]]:
         return build_incident_snapshots(self._events, self._scenario.configuration)
 
-    def _observe(self, observation: TrackObservation, now_ms: int) -> None:
+    def _observe(
+        self,
+        observation: TrackObservation,
+        now_ms: int,
+        visual_evidence: tuple[HighRiskEvidenceObservation, ...],
+    ) -> None:
         state = self._tracks.get(observation.track_id)
         if state is None:
             state = self._new_state(observation.track_id, now_ms, episode_number=1)
             self._tracks[observation.track_id] = state
 
         state.last_seen_ms = now_ms
+        self._update_evidence_window(state, visual_evidence, now_ms)
         if not state.observed_emitted:
             self._emit(
                 state=state,
@@ -101,8 +118,50 @@ class ReplayEngine:
 
         if inside:
             self._handle_inside(observation.track_id, state, now_ms)
+            self._maybe_emit_high_risk(observation.track_id, state, now_ms)
         else:
             self._handle_outside(state, now_ms)
+
+    def _update_evidence_window(
+        self,
+        state: _TrackState,
+        evidence: tuple[HighRiskEvidenceObservation, ...],
+        now_ms: int,
+    ) -> None:
+        if state.evidence_window is None:
+            state.evidence_window = deque()
+        score = max((item.score for item in evidence), default=None)
+        state.evidence_window.append((now_ms, score))
+        cutoff = now_ms - self._scenario.configuration.high_risk_window_ms
+        while state.evidence_window and state.evidence_window[0][0] < cutoff:
+            state.evidence_window.popleft()
+
+    def _maybe_emit_high_risk(self, track_id: str, state: _TrackState, now_ms: int) -> None:
+        if state.high_risk_emitted or not state.intrusion_active or state.evidence_window is None:
+            return
+        positive_scores = [score for _, score in state.evidence_window if score is not None]
+        config = self._scenario.configuration
+        if len(positive_scores) < config.high_risk_min_positive_frames:
+            return
+        mean_score = sum(positive_scores) / len(positive_scores)
+        if mean_score < config.high_risk_min_mean_score:
+            return
+        self._emit(
+            state=state,
+            track_id=track_id,
+            event_type="high_risk_evidence",
+            risk_level=4,
+            source_time_ms=now_ms,
+            reason_codes=["persistent_high_risk_visual_evidence"],
+            zone_id=self._scenario.zone.zone_id,
+            evidence={
+                "meanScore": mean_score,
+                "maxScore": max(positive_scores),
+                "positiveFrames": len(positive_scores),
+                "windowFrames": len(state.evidence_window),
+            },
+        )
+        state.high_risk_emitted = True
 
     def _handle_inside(self, track_id: str, state: _TrackState, now_ms: int) -> None:
         if not state.inside:
@@ -174,6 +233,9 @@ class ReplayEngine:
         )
         state.intrusion_active = False
         state.dwell_emitted = False
+        state.high_risk_emitted = False
+        if state.evidence_window is not None:
+            state.evidence_window.clear()
 
     def _new_state(self, track_id: str, now_ms: int, episode_number: int) -> _TrackState:
         return _TrackState(
@@ -196,6 +258,7 @@ class ReplayEngine:
         source_time_ms: int,
         reason_codes: list[str],
         zone_id: str | None,
+        evidence: dict[str, int | float] | None = None,
     ) -> None:
         event_number = len(self._events) + 1
         event_id = uuid5(
@@ -220,10 +283,13 @@ class ReplayEngine:
             "components": {
                 "detector": config.detector_version,
                 "tracker": config.tracker_version,
+                "highRiskDetector": config.high_risk_detector_version,
                 "riskEngine": config.risk_engine_version,
                 "configuration": config.configuration_version,
             },
         }
+        if evidence is not None:
+            event["evidence"] = evidence
         validate_incident_event(event)
         self._events.append(event)
 

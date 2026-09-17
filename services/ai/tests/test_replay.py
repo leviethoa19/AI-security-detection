@@ -3,8 +3,15 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 
+import pytest
+
 from security_ai.contracts import validate_incident_event
-from security_ai.domain import BoundingBox, FrameObservation, TrackObservation
+from security_ai.domain import (
+    BoundingBox,
+    FrameObservation,
+    HighRiskEvidenceObservation,
+    TrackObservation,
+)
 from security_ai.replay import ReplayEngine, replay
 from security_ai.scenarios import load_scenario
 
@@ -145,6 +152,64 @@ def test_missing_track_resolves_after_grace() -> None:
         "zone_intrusion",
         "incident_resolved",
     ]
+
+
+def test_transient_high_risk_evidence_does_not_escalate() -> None:
+    scenario = load_scenario(FIXTURES / "entry_dwell_exit.json")
+    scenario = replace(
+        scenario,
+        frames=(
+            _frame_with_evidence(0, score=0.9),
+            _frame_with_evidence(500, score=None),
+            _frame_with_evidence(900, score=None),
+        ),
+    )
+
+    events = ReplayEngine(scenario).run()
+
+    assert "high_risk_evidence" not in [event["eventType"] for event in events]
+
+
+def test_persistent_high_risk_evidence_escalates_once_with_aggregate() -> None:
+    scenario = load_scenario(FIXTURES / "entry_dwell_exit.json")
+    scenario = replace(
+        scenario,
+        frames=tuple(
+            _frame_with_evidence(timestamp, score=0.8)
+            for timestamp in (0, 300, 600, 900)
+        ),
+    )
+
+    events = ReplayEngine(scenario).run()
+    high_risk = [event for event in events if event["eventType"] == "high_risk_evidence"]
+
+    assert len(high_risk) == 1
+    assert high_risk[0]["riskLevel"] == 4
+    assert high_risk[0]["sourceTimeMs"] == 600
+    assert high_risk[0]["evidence"]["meanScore"] == pytest.approx(0.8)
+    assert high_risk[0]["evidence"]["maxScore"] == 0.8
+    assert high_risk[0]["evidence"]["positiveFrames"] == 3
+    assert high_risk[0]["evidence"]["windowFrames"] == 3
+
+
+def _frame_with_evidence(source_time_ms: int, *, score: float | None) -> FrameObservation:
+    box = BoundingBox(60, 20, 80, 70)
+    evidence = (
+        (
+            HighRiskEvidenceObservation(
+                track_id="7",
+                box=BoundingBox(66, 45, 75, 58),
+                score=score,
+            ),
+        )
+        if score is not None
+        else ()
+    )
+    return FrameObservation(
+        source_time_ms=source_time_ms,
+        tracks=(TrackObservation(track_id="7", box=box),),
+        high_risk_evidence=evidence,
+    )
 
 
 def _frame(source_time_ms: int, *, inside: bool) -> FrameObservation:

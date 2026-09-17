@@ -20,6 +20,7 @@
       "properties": {
         "detector": { "type": "string", "minLength": 1 },
         "tracker": { "type": "string", "minLength": 1 },
+        "highRiskDetector": { "type": "string", "minLength": 1 },
         "riskEngine": { "type": "string", "minLength": 1 },
         "configuration": { "type": "string", "minLength": 1 }
       }
@@ -80,12 +81,18 @@
     "configuration": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["dwellThresholdMs", "resolutionGraceMs", "evidencePreMs", "evidencePostMs"],
+      "required": [
+        "dwellThresholdMs", "resolutionGraceMs", "evidencePreMs", "evidencePostMs",
+        "highRiskWindowMs", "highRiskMinPositiveFrames", "highRiskMinMeanScore"
+      ],
       "properties": {
         "dwellThresholdMs": { "type": "integer", "minimum": 0 },
         "resolutionGraceMs": { "type": "integer", "minimum": 0 },
         "evidencePreMs": { "type": "integer", "minimum": 0 },
-        "evidencePostMs": { "type": "integer", "minimum": 0 }
+        "evidencePostMs": { "type": "integer", "minimum": 0 },
+        "highRiskWindowMs": { "type": "integer", "minimum": 0 },
+        "highRiskMinPositiveFrames": { "type": "integer", "minimum": 1 },
+        "highRiskMinMeanScore": { "type": "number", "minimum": 0, "maximum": 1 }
       }
     }
   }

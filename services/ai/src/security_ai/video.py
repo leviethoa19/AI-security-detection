@@ -16,6 +16,7 @@ from numpy.typing import NDArray
 from security_ai.detection import SUPPORTED_MODELS, PersonDetector, TorchvisionPersonDetector
 from security_ai.domain import (
     FrameObservation,
+    HighRiskDetection,
     Point,
     ReplayConfiguration,
     ReplayScenario,
@@ -23,6 +24,11 @@ from security_ai.domain import (
     Zone,
 )
 from security_ai.evidence import EvidenceArtifact, RollingEvidenceRecorder, write_evidence_capture
+from security_ai.high_risk import (
+    HighRiskObjectDetector,
+    TransformersZeroShotFirearmDetector,
+    associate_high_risk_evidence,
+)
 from security_ai.replay import ReplayEngine
 from security_ai.tracking import ByteTrackPersonTracker, PersonTracker
 
@@ -37,10 +43,12 @@ class VideoRunMetrics:
     source_fps: float
     mean_detection_ms: float
     p95_detection_ms: float
+    mean_high_risk_detection_ms: float
     effective_fps: float
     detected_person_boxes: int
     emitted_track_boxes: int
     emitted_events: int
+    high_risk_detection_boxes: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,6 +75,7 @@ def process_video(
     evidence_dir: Path | None = None,
     evidence_pre_ms: int = 2_000,
     evidence_post_ms: int = 2_000,
+    high_risk_detector: HighRiskObjectDetector | None = None,
 ) -> VideoRunResult:
     if frame_stride < 1:
         raise ValueError("frame_stride must be at least 1")
@@ -93,6 +102,9 @@ def process_video(
         evidence_post_ms=evidence_post_ms,
         detector_version=detector.version,
         tracker_version=tracker.version,
+        high_risk_detector_version=(
+            high_risk_detector.version if high_risk_detector is not None else "disabled"
+        ),
         configuration_version="video-default-v2",
     )
     scenario = ReplayScenario(
@@ -112,9 +124,11 @@ def process_video(
     )
     events: list[dict[str, Any]] = []
     detection_times_ms: list[float] = []
+    high_risk_detection_times_ms: list[float] = []
     input_frames = 0
     detection_count = 0
     track_count = 0
+    high_risk_detection_count = 0
     run_started = perf_counter()
     try:
         while True:
@@ -138,10 +152,23 @@ def process_video(
                 frame=typed_frame,
                 timestamp_seconds=source_time_ms / 1_000,
             )
+            high_risk_detections: tuple[HighRiskDetection, ...] = ()
+            if high_risk_detector is not None:
+                high_risk_started = perf_counter()
+                high_risk_detections = high_risk_detector.detect(typed_frame)
+                high_risk_detection_times_ms.append(
+                    (perf_counter() - high_risk_started) * 1_000
+                )
+            associated_evidence = associate_high_risk_evidence(high_risk_detections, tracks)
             detection_count += len(detections)
             track_count += len(tracks)
-            observation = FrameObservation(source_time_ms=source_time_ms, tracks=tracks)
-            annotated = _annotate(typed_frame, tracks, zone)
+            high_risk_detection_count += len(high_risk_detections)
+            observation = FrameObservation(
+                source_time_ms=source_time_ms,
+                tracks=tracks,
+                high_risk_evidence=associated_evidence,
+            )
+            annotated = _annotate(typed_frame, tracks, zone, high_risk_detections)
             writer.write(annotated)
             if evidence_recorder is not None:
                 evidence_recorder.push(source_time_ms, annotated)
@@ -168,6 +195,9 @@ def process_video(
         ]
     incidents = engine.incident_snapshots()
     durations: NDArray[np.float64] = np.asarray(detection_times_ms, dtype=np.float64)
+    high_risk_durations: NDArray[np.float64] = np.asarray(
+        high_risk_detection_times_ms, dtype=np.float64
+    )
     metrics = VideoRunMetrics(
         model=detector.version,
         device=detector.device_name,
@@ -177,16 +207,23 @@ def process_video(
         source_fps=source_fps,
         mean_detection_ms=float(durations.mean()) if durations.size else 0.0,
         p95_detection_ms=float(np.percentile(durations, 95)) if durations.size else 0.0,
+        mean_high_risk_detection_ms=(
+            float(high_risk_durations.mean()) if high_risk_durations.size else 0.0
+        ),
         effective_fps=len(detection_times_ms) / elapsed if elapsed else 0.0,
         detected_person_boxes=detection_count,
         emitted_track_boxes=track_count,
         emitted_events=len(events),
+        high_risk_detection_boxes=high_risk_detection_count,
     )
     return VideoRunResult(events=events, incidents=incidents, evidence=evidence, metrics=metrics)
 
 
 def _annotate(
-    frame: NDArray[np.uint8], tracks: tuple[TrackObservation, ...], zone: Zone
+    frame: NDArray[np.uint8],
+    tracks: tuple[TrackObservation, ...],
+    zone: Zone,
+    high_risk_detections: tuple[HighRiskDetection, ...] = (),
 ) -> NDArray[np.uint8]:
     annotated = frame.copy()
     polygon: NDArray[np.int32] = np.asarray(
@@ -208,6 +245,21 @@ def _annotate(
             2,
             cv2.LINE_AA,
         )
+    for detection in high_risk_detections:
+        box = detection.box
+        start = (round(box.x1), round(box.y1))
+        end = (round(box.x2), round(box.y2))
+        cv2.rectangle(annotated, start, end, (0, 140, 255), 2)
+        cv2.putText(
+            annotated,
+            f"potential firearm {detection.score:.2f}",
+            (start[0], max(18, start[1] - 6)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.45,
+            (0, 140, 255),
+            2,
+            cv2.LINE_AA,
+        )
     return annotated
 
 
@@ -221,6 +273,8 @@ def main() -> None:
     parser.add_argument("--evidence-dir", type=Path)
     parser.add_argument("--model", choices=SUPPORTED_MODELS, default="ssdlite320")
     parser.add_argument("--confidence", type=float, default=0.5)
+    parser.add_argument("--high-risk-model", choices=["owlv2-base"])
+    parser.add_argument("--high-risk-confidence", type=float, default=0.1)
     parser.add_argument("--frame-stride", type=int, default=1)
     parser.add_argument("--max-frames", type=int)
     parser.add_argument(
@@ -237,6 +291,13 @@ def main() -> None:
         confidence_threshold=arguments.confidence,
     )
     tracker = ByteTrackPersonTracker(frame_rate=fps / arguments.frame_stride)
+    high_risk_detector = (
+        TransformersZeroShotFirearmDetector(
+            confidence_threshold=arguments.high_risk_confidence,
+        )
+        if arguments.high_risk_model
+        else None
+    )
     result = process_video(
         input_path=arguments.input,
         output_video_path=arguments.output_video,
@@ -246,6 +307,7 @@ def main() -> None:
         frame_stride=arguments.frame_stride,
         max_frames=arguments.max_frames,
         evidence_dir=arguments.evidence_dir,
+        high_risk_detector=high_risk_detector,
     )
     arguments.output_events.parent.mkdir(parents=True, exist_ok=True)
     arguments.output_events.write_text(json.dumps(result.events, indent=2) + "\n", encoding="utf-8")
