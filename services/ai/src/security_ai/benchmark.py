@@ -10,6 +10,7 @@ from time import perf_counter
 
 import cv2
 import numpy as np
+from numpy.typing import NDArray
 
 from security_ai.detection import SUPPORTED_MODELS, TorchvisionPersonDetector
 
@@ -55,7 +56,7 @@ def benchmark_video(
             person_boxes += len(detector.detect(frame))
             durations.append((perf_counter() - started) * 1_000)
 
-        values = np.asarray(durations, dtype=np.float64)
+        values: NDArray[np.float64] = np.asarray(durations, dtype=np.float64)
         mean_ms = float(values.mean())
         results.append(
             BenchmarkRow(
@@ -112,4 +113,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -46,11 +46,14 @@ select = ["E", "F", "I", "B", "UP", "RUF"]
 python_version = "3.11"
 strict = true
 packages = ["security_ai"]
+follow_imports = "skip"
 
 [[tool.mypy.overrides]]
 module = [
   "cv2",
+  "supervision",
   "supervision.*",
+  "trackers",
   "trackers.*",
   "torchvision",
   "torchvision.models",

@@ -56,12 +56,16 @@ class ByteTrackPersonTracker:
         timestamp_seconds: float | None = None,
     ) -> tuple[TrackObservation, ...]:
         if detections:
-            xyxy = np.asarray(
+            xyxy: NDArray[np.float32] = np.asarray(
                 [[item.box.x1, item.box.y1, item.box.x2, item.box.y2] for item in detections],
                 dtype=np.float32,
             )
-            confidence = np.asarray([item.score for item in detections], dtype=np.float32)
-            class_id = np.asarray([item.class_id for item in detections], dtype=int)
+            confidence: NDArray[np.float32] = np.asarray(
+                [item.score for item in detections], dtype=np.float32
+            )
+            class_id: NDArray[np.int_] = np.asarray(
+                [item.class_id for item in detections], dtype=int
+            )
         else:
             xyxy = np.empty((0, 4), dtype=np.float32)
             confidence = np.empty((0,), dtype=np.float32)

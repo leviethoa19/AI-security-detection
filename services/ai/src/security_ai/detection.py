@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from numpy.typing import NDArray
 from torch import Tensor, nn
-from torchvision.models.detection import (  # type: ignore[import-untyped]
+from torchvision.models.detection import (
     FasterRCNN_MobileNet_V3_Large_320_FPN_Weights,
     SSDLite320_MobileNet_V3_Large_Weights,
     fasterrcnn_mobilenet_v3_large_320_fpn,

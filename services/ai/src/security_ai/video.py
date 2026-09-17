@@ -133,7 +133,7 @@ def process_video(
         frames=tuple(observations),
     )
     events = ReplayEngine(scenario).run()
-    durations = np.asarray(detection_times_ms, dtype=np.float64)
+    durations: NDArray[np.float64] = np.asarray(detection_times_ms, dtype=np.float64)
     metrics = VideoRunMetrics(
         model=detector.version,
         device=detector.device_name,
@@ -155,7 +155,9 @@ def _annotate(
     frame: NDArray[np.uint8], tracks: tuple[TrackObservation, ...], zone: Zone
 ) -> NDArray[np.uint8]:
     annotated = frame.copy()
-    polygon = np.asarray([[round(point.x), round(point.y)] for point in zone.polygon], np.int32)
+    polygon: NDArray[np.int32] = np.asarray(
+        [[round(point.x), round(point.y)] for point in zone.polygon], np.int32
+    )
     cv2.polylines(annotated, [polygon], isClosed=True, color=(0, 200, 255), thickness=2)
     for track in tracks:
         box = track.box

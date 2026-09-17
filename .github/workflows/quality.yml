@@ -8,7 +8,7 @@ jobs:
   contracts:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -20,12 +20,12 @@ jobs:
   python:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
-      - run: python -m pip install -e "services/ai[dev]"
+      - run: python -m pip install -e "services/ai[dev,vision]"
       - run: python -m ruff check services/ai
-      - run: python -m mypy services/ai/src
+      - run: python -m mypy --config-file services/ai/pyproject.toml services/ai/src
       - run: python -m pytest services/ai/tests
