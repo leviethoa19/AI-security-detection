@@ -32,6 +32,48 @@ def test_replay_is_deterministic() -> None:
     assert replay(path) == replay(path)
 
 
+def test_incremental_processing_matches_batch_replay() -> None:
+    scenario = load_scenario(FIXTURES / "entry_dwell_exit.json")
+    engine = ReplayEngine(replace(scenario, frames=()))
+
+    streamed = [event for frame in scenario.frames for event in engine.process_frame(frame)]
+
+    assert streamed == ReplayEngine(scenario).run()
+    assert engine.events == streamed
+
+
+def test_incremental_processing_rejects_out_of_order_frames() -> None:
+    scenario = load_scenario(FIXTURES / "entry_dwell_exit.json")
+    engine = ReplayEngine(replace(scenario, frames=()))
+    engine.process_frame(_frame(500, inside=True))
+
+    try:
+        engine.process_frame(_frame(499, inside=True))
+    except ValueError as error:
+        assert "ordered" in str(error)
+    else:
+        raise AssertionError("out-of-order frame was accepted")
+
+
+def test_incident_snapshot_contains_timeline_and_peak_risk() -> None:
+    scenario = load_scenario(FIXTURES / "entry_dwell_exit.json")
+    engine = ReplayEngine(scenario)
+    engine.run()
+
+    snapshots = engine.incident_snapshots()
+
+    assert len(snapshots) == 1
+    snapshot = snapshots[0]
+    assert snapshot["status"] == "resolved"
+    assert snapshot["currentRiskLevel"] == 0
+    assert snapshot["peakRiskLevel"] == 3
+    assert [entry["eventType"] for entry in snapshot["timeline"]] == [
+        "zone_intrusion",
+        "extended_presence",
+        "incident_resolved",
+    ]
+
+
 def test_continuous_intrusion_is_not_duplicated() -> None:
     events = replay(FIXTURES / "entry_dwell_exit.json")
     assert sum(event["eventType"] == "zone_intrusion" for event in events) == 1

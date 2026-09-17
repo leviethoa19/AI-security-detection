@@ -19,14 +19,14 @@ def _repository_root() -> Path:
     return Path(__file__).resolve().parents[4]
 
 
-@lru_cache(maxsize=1)
-def _incident_validator() -> Draft202012Validator:
+@lru_cache(maxsize=2)
+def _validator(schema_name: str) -> Draft202012Validator:
     schema_path = (
         _repository_root()
         / "packages"
         / "contracts"
         / "schema"
-        / "incident-event.v1.schema.json"
+        / schema_name
     )
     schema: dict[str, Any] = json.loads(schema_path.read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(schema)
@@ -37,8 +37,19 @@ def validate_incident_event(value: object) -> None:
     """Validate an incident event or raise one concise domain error."""
 
     try:
-        _incident_validator().validate(value)
+        _validator("incident-event.v1.schema.json").validate(value)
     except ValidationError as error:
         location = ".".join(str(part) for part in error.absolute_path) or "<root>"
         message = f"invalid incident event at {location}: {error.message}"
+        raise ContractValidationError(message) from error
+
+
+def validate_incident_snapshot(value: object) -> None:
+    """Validate a materialized incident snapshot."""
+
+    try:
+        _validator("incident-snapshot.v1.schema.json").validate(value)
+    except ValidationError as error:
+        location = ".".join(str(part) for part in error.absolute_path) or "<root>"
+        message = f"invalid incident snapshot at {location}: {error.message}"
         raise ContractValidationError(message) from error

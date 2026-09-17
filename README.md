@@ -6,7 +6,7 @@ The project is intentionally more than a detector demo. Its core question is whe
 
 ## Current status
 
-Milestones 0–2 are complete. The system can replay scripted tracks and process prerecorded video with real person detection, ByteTrack identities, polygon zones, temporal dwell logic, incident deduplication, contract validation, overlays, and runtime measurements. Cloud credentials and private footage are not required.
+Milestones 0–3 are complete. The system can replay scripted tracks and process prerecorded video with real person detection, ByteTrack identities, polygon zones, incremental temporal reasoning, incident deduplication, versioned incident snapshots, bounded evidence clips, overlays, and runtime measurements. Cloud credentials and private footage are not required.
 
 ## Planned system
 
@@ -42,7 +42,7 @@ Create a Python virtual environment and install the AI workspace with developmen
 
 ```sh
 python -m venv .venv
-.venv/Scripts/python -m pip install -e "services/ai[dev]"
+.venv/Scripts/python -m pip install -e "services/ai[dev,vision]"
 ```
 
 On macOS/Linux, use `.venv/bin/python` instead.
@@ -53,7 +53,7 @@ Run the foundation checks:
 npm run check
 npm test
 .venv/Scripts/python -m ruff check services/ai
-.venv/Scripts/python -m mypy services/ai/src
+.venv/Scripts/python -m mypy --config-file services/ai/pyproject.toml services/ai/src
 .venv/Scripts/python -m pytest services/ai/tests
 ```
 
@@ -65,15 +65,18 @@ Run the deterministic walking skeleton:
 
 The golden scenario emits a deterministic sequence: person observed, zone intrusion, extended presence, and incident resolution. Re-entry during the grace period remains part of the same incident; re-entry after resolution starts a new incident.
 
-Install the optional vision environment and run a real video:
+Run a real video:
 
 ```sh
-python -m pip install -e "services/ai[dev,vision]"
 python -m security_ai.video input.mp4 \
   --output-video artifacts/annotated.mp4 \
   --output-events artifacts/events.json \
-  --output-metrics artifacts/metrics.json
+  --output-incidents artifacts/incidents.json \
+  --output-metrics artifacts/metrics.json \
+  --evidence-dir artifacts/evidence
 ```
+
+The evidence directory contains one short clip, trigger-adjacent thumbnail, and manifest per opened incident. It never contains continuous source video and is excluded from Git.
 
 On Windows, clone to a short directory or create the virtual environment at a short path; large PyTorch wheels can exceed the legacy path-length limit in deeply nested directories.
 

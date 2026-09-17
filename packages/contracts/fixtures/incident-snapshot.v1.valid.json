@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "incidentId": "52d5c9db-e097-4656-af2e-84b96fc56b32",
+  "cameraId": "camera-demo-01",
+  "trackId": "track-7",
+  "zoneId": "rear-entry",
+  "status": "resolved",
+  "currentRiskLevel": 0,
+  "peakRiskLevel": 3,
+  "openedAt": "2026-09-16T00:00:01Z",
+  "updatedAt": "2026-09-16T00:00:04Z",
+  "resolvedAt": "2026-09-16T00:00:04Z",
+  "openedSourceTimeMs": 1000,
+  "updatedSourceTimeMs": 4000,
+  "resolvedSourceTimeMs": 4000,
+  "reasonCodes": [
+    "person_present", "armed_zone_entry", "dwell_threshold_exceeded",
+    "track_left_scene", "resolution_grace_elapsed"
+  ],
+  "timeline": [
+    {
+      "eventId": "7b2fb7ac-e074-4aaf-b73a-3128f914ef34",
+      "eventType": "zone_intrusion",
+      "riskLevel": 2,
+      "occurredAt": "2026-09-16T00:00:01Z",
+      "sourceTimeMs": 1000,
+      "reasonCodes": ["person_present", "armed_zone_entry"]
+    },
+    {
+      "eventId": "aa0703ca-1727-49ef-8593-09b90f65b2d6",
+      "eventType": "extended_presence",
+      "riskLevel": 3,
+      "occurredAt": "2026-09-16T00:00:02Z",
+      "sourceTimeMs": 2000,
+      "reasonCodes": ["dwell_threshold_exceeded"]
+    },
+    {
+      "eventId": "12448ad4-7e7f-49be-a1d4-c622348e4b17",
+      "eventType": "incident_resolved",
+      "riskLevel": 0,
+      "occurredAt": "2026-09-16T00:00:04Z",
+      "sourceTimeMs": 4000,
+      "reasonCodes": ["track_left_scene", "resolution_grace_elapsed"]
+    }
+  ],
+  "components": {
+    "detector": "scripted-v1",
+    "tracker": "scripted-v1",
+    "riskEngine": "rules-v1",
+    "configuration": "golden-default-v1"
+  },
+  "configuration": {
+    "dwellThresholdMs": 1000,
+    "resolutionGraceMs": 1000,
+    "evidencePreMs": 2000,
+    "evidencePostMs": 2000
+  }
+}

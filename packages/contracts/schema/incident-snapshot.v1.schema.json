@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://security-ai.local/contracts/incident-snapshot.v1.schema.json",
+  "title": "IncidentSnapshotV1",
+  "$defs": {
+    "eventType": {
+      "enum": ["zone_intrusion", "extended_presence", "high_risk_evidence", "incident_resolved"]
+    },
+    "reasonCode": {
+      "enum": [
+        "person_present", "armed_zone_entry", "dwell_threshold_exceeded",
+        "persistent_high_risk_visual_evidence", "track_left_scene",
+        "resolution_grace_elapsed"
+      ]
+    },
+    "components": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detector", "tracker", "riskEngine", "configuration"],
+      "properties": {
+        "detector": { "type": "string", "minLength": 1 },
+        "tracker": { "type": "string", "minLength": 1 },
+        "riskEngine": { "type": "string", "minLength": 1 },
+        "configuration": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "incidentId", "cameraId", "trackId", "zoneId", "status",
+    "currentRiskLevel", "peakRiskLevel", "openedAt", "updatedAt", "resolvedAt",
+    "openedSourceTimeMs", "updatedSourceTimeMs", "resolvedSourceTimeMs",
+    "reasonCodes", "timeline", "components", "configuration"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "incidentId": { "type": "string", "format": "uuid" },
+    "cameraId": { "type": "string", "minLength": 1 },
+    "trackId": { "type": "string", "minLength": 1 },
+    "zoneId": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["active", "escalated", "resolved"] },
+    "currentRiskLevel": { "type": "integer", "minimum": 0, "maximum": 4 },
+    "peakRiskLevel": { "type": "integer", "minimum": 2, "maximum": 4 },
+    "openedAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "resolvedAt": { "type": ["string", "null"], "format": "date-time" },
+    "openedSourceTimeMs": { "type": "integer", "minimum": 0 },
+    "updatedSourceTimeMs": { "type": "integer", "minimum": 0 },
+    "resolvedSourceTimeMs": { "type": ["integer", "null"], "minimum": 0 },
+    "reasonCodes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/reasonCode" }
+    },
+    "timeline": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["eventId", "eventType", "riskLevel", "occurredAt", "sourceTimeMs", "reasonCodes"],
+        "properties": {
+          "eventId": { "type": "string", "format": "uuid" },
+          "eventType": { "$ref": "#/$defs/eventType" },
+          "riskLevel": { "type": "integer", "minimum": 0, "maximum": 4 },
+          "occurredAt": { "type": "string", "format": "date-time" },
+          "sourceTimeMs": { "type": "integer", "minimum": 0 },
+          "reasonCodes": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/reasonCode" }
+          }
+        }
+      }
+    },
+    "components": { "$ref": "#/$defs/components" },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dwellThresholdMs", "resolutionGraceMs", "evidencePreMs", "evidencePostMs"],
+      "properties": {
+        "dwellThresholdMs": { "type": "integer", "minimum": 0 },
+        "resolutionGraceMs": { "type": "integer", "minimum": 0 },
+        "evidencePreMs": { "type": "integer", "minimum": 0 },
+        "evidencePostMs": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

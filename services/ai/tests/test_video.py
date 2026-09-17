@@ -36,6 +36,7 @@ class ScriptedTracker:
 def test_video_pipeline_writes_overlay_and_events(tmp_path: Path) -> None:
     input_path = tmp_path / "input.mp4"
     output_path = tmp_path / "annotated.mp4"
+    evidence_dir = tmp_path / "evidence"
     _write_fixture_video(input_path)
     zone = Zone(
         zone_id="test-zone",
@@ -49,11 +50,18 @@ def test_video_pipeline_writes_overlay_and_events(tmp_path: Path) -> None:
         tracker=ScriptedTracker(),
         zone=zone,
         max_frames=4,
+        evidence_dir=evidence_dir,
+        evidence_pre_ms=100,
+        evidence_post_ms=100,
     )
 
     assert output_path.exists()
     assert output_path.stat().st_size > 0
     assert result.metrics.processed_frames == 4
+    assert len(result.incidents) == 1
+    assert result.incidents[0]["status"] == "active"
+    assert len(result.evidence) == 1
+    assert Path(result.evidence[0].clip_path).exists()
     assert result.metrics.detected_person_boxes == 4
     assert [event["eventType"] for event in result.events[:2]] == [
         "person_observed",

@@ -54,6 +54,8 @@ class Zone:
 class ReplayConfiguration:
     dwell_threshold_ms: int = 2_000
     resolution_grace_ms: int = 1_000
+    evidence_pre_ms: int = 2_000
+    evidence_post_ms: int = 2_000
     detector_version: str = "scripted-v1"
     tracker_version: str = "scripted-v1"
     risk_engine_version: str = "rules-v1"

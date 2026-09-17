@@ -5,7 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from security_ai.contracts import ContractValidationError, validate_incident_event
+from security_ai.contracts import (
+    ContractValidationError,
+    validate_incident_event,
+    validate_incident_snapshot,
+)
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 FIXTURE = (
@@ -15,6 +19,13 @@ FIXTURE = (
     / "fixtures"
     / "incident-event.v1.valid.json"
 )
+SNAPSHOT_FIXTURE = (
+    REPOSITORY_ROOT
+    / "packages"
+    / "contracts"
+    / "fixtures"
+    / "incident-snapshot.v1.valid.json"
+)
 
 
 def load_fixture() -> dict[str, object]:
@@ -23,6 +34,10 @@ def load_fixture() -> dict[str, object]:
 
 def test_shared_fixture_is_valid() -> None:
     validate_incident_event(load_fixture())
+
+
+def test_shared_snapshot_fixture_is_valid() -> None:
+    validate_incident_snapshot(json.loads(SNAPSHOT_FIXTURE.read_text(encoding="utf-8")))
 
 
 def test_out_of_range_risk_is_rejected() -> None:

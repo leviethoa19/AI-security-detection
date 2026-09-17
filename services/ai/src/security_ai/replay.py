@@ -11,8 +11,14 @@ from typing import Any
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from security_ai.contracts import validate_incident_event
-from security_ai.domain import ReplayConfiguration, ReplayScenario, TrackObservation
+from security_ai.domain import (
+    FrameObservation,
+    ReplayConfiguration,
+    ReplayScenario,
+    TrackObservation,
+)
 from security_ai.geometry import point_in_polygon
+from security_ai.incidents import build_incident_snapshots
 from security_ai.scenarios import load_scenario
 
 
@@ -37,14 +43,37 @@ class ReplayEngine:
         self._started_at = _parse_utc(scenario.started_at)
         self._tracks: dict[str, _TrackState] = {}
         self._events: list[dict[str, Any]] = []
+        self._last_source_time_ms: int | None = None
 
     def run(self) -> list[dict[str, Any]]:
+        if self._last_source_time_ms is not None:
+            raise RuntimeError("run cannot be called after incremental processing has started")
         for frame in self._scenario.frames:
-            observed_ids = {track.track_id for track in frame.tracks}
-            for track in frame.tracks:
-                self._observe(track, frame.source_time_ms)
-            self._advance_unobserved(observed_ids, frame.source_time_ms)
+            self.process_frame(frame)
         return list(self._events)
+
+    def process_frame(self, frame: FrameObservation) -> list[dict[str, Any]]:
+        """Process one ordered frame and return only the events emitted by it."""
+
+        if (
+            self._last_source_time_ms is not None
+            and frame.source_time_ms < self._last_source_time_ms
+        ):
+            raise ValueError("frames must be ordered by source_time_ms")
+        event_offset = len(self._events)
+        observed_ids = {track.track_id for track in frame.tracks}
+        for track in frame.tracks:
+            self._observe(track, frame.source_time_ms)
+        self._advance_unobserved(observed_ids, frame.source_time_ms)
+        self._last_source_time_ms = frame.source_time_ms
+        return list(self._events[event_offset:])
+
+    @property
+    def events(self) -> list[dict[str, Any]]:
+        return list(self._events)
+
+    def incident_snapshots(self) -> list[dict[str, Any]]:
+        return build_incident_snapshots(self._events, self._scenario.configuration)
 
     def _observe(self, observation: TrackObservation, now_ms: int) -> None:
         state = self._tracks.get(observation.track_id)

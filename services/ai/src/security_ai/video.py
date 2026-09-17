@@ -22,6 +22,7 @@ from security_ai.domain import (
     TrackObservation,
     Zone,
 )
+from security_ai.evidence import EvidenceArtifact, RollingEvidenceRecorder, write_evidence_capture
 from security_ai.replay import ReplayEngine
 from security_ai.tracking import ByteTrackPersonTracker, PersonTracker
 
@@ -45,6 +46,8 @@ class VideoRunMetrics:
 @dataclass(frozen=True, slots=True)
 class VideoRunResult:
     events: list[dict[str, Any]]
+    incidents: list[dict[str, Any]]
+    evidence: list[EvidenceArtifact]
     metrics: VideoRunMetrics
 
 
@@ -61,6 +64,9 @@ def process_video(
     armed: bool = True,
     frame_stride: int = 1,
     max_frames: int | None = None,
+    evidence_dir: Path | None = None,
+    evidence_pre_ms: int = 2_000,
+    evidence_post_ms: int = 2_000,
 ) -> VideoRunResult:
     if frame_stride < 1:
         raise ValueError("frame_stride must be at least 1")
@@ -82,7 +88,29 @@ def process_video(
         capture.release()
         raise ValueError(f"could not create output video: {output_video_path}")
 
-    observations: list[FrameObservation] = []
+    configuration = ReplayConfiguration(
+        evidence_pre_ms=evidence_pre_ms,
+        evidence_post_ms=evidence_post_ms,
+        detector_version=detector.version,
+        tracker_version=tracker.version,
+        configuration_version="video-default-v2",
+    )
+    scenario = ReplayScenario(
+        scenario_id=scenario_id,
+        camera_id=camera_id,
+        started_at=started_at,
+        armed=armed,
+        zone=zone,
+        configuration=configuration,
+        frames=(),
+    )
+    engine = ReplayEngine(scenario)
+    evidence_recorder = (
+        RollingEvidenceRecorder(pre_event_ms=evidence_pre_ms, post_event_ms=evidence_post_ms)
+        if evidence_dir is not None
+        else None
+    )
+    events: list[dict[str, Any]] = []
     detection_times_ms: list[float] = []
     input_frames = 0
     detection_count = 0
@@ -97,7 +125,7 @@ def process_video(
             input_frames += 1
             if current_index % frame_stride != 0:
                 continue
-            if max_frames is not None and len(observations) >= max_frames:
+            if max_frames is not None and len(detection_times_ms) >= max_frames:
                 break
 
             typed_frame = cast(NDArray[np.uint8], frame)
@@ -112,43 +140,49 @@ def process_video(
             )
             detection_count += len(detections)
             track_count += len(tracks)
-            observations.append(FrameObservation(source_time_ms=source_time_ms, tracks=tracks))
-            writer.write(_annotate(typed_frame, tracks, zone))
+            observation = FrameObservation(source_time_ms=source_time_ms, tracks=tracks)
+            annotated = _annotate(typed_frame, tracks, zone)
+            writer.write(annotated)
+            if evidence_recorder is not None:
+                evidence_recorder.push(source_time_ms, annotated)
+            frame_events = engine.process_frame(observation)
+            events.extend(frame_events)
+            if evidence_recorder is not None:
+                for event in frame_events:
+                    if event["eventType"] == "zone_intrusion":
+                        evidence_recorder.trigger(event["incidentId"], source_time_ms)
     finally:
         writer.release()
         capture.release()
 
     elapsed = perf_counter() - run_started
-    scenario = ReplayScenario(
-        scenario_id=scenario_id,
-        camera_id=camera_id,
-        started_at=started_at,
-        armed=armed,
-        zone=zone,
-        configuration=ReplayConfiguration(
-            detector_version=detector.version,
-            tracker_version=tracker.version,
-            configuration_version="video-default-v1",
-        ),
-        frames=tuple(observations),
-    )
-    events = ReplayEngine(scenario).run()
+    evidence: list[EvidenceArtifact] = []
+    if evidence_recorder is not None and evidence_dir is not None:
+        evidence = [
+            write_evidence_capture(
+                capture,
+                output_dir=evidence_dir,
+                fps=source_fps / frame_stride,
+            )
+            for capture in evidence_recorder.finalize()
+        ]
+    incidents = engine.incident_snapshots()
     durations: NDArray[np.float64] = np.asarray(detection_times_ms, dtype=np.float64)
     metrics = VideoRunMetrics(
         model=detector.version,
         device=detector.device_name,
         tracker=tracker.version,
         input_frames=input_frames,
-        processed_frames=len(observations),
+        processed_frames=len(detection_times_ms),
         source_fps=source_fps,
         mean_detection_ms=float(durations.mean()) if durations.size else 0.0,
         p95_detection_ms=float(np.percentile(durations, 95)) if durations.size else 0.0,
-        effective_fps=len(observations) / elapsed if elapsed else 0.0,
+        effective_fps=len(detection_times_ms) / elapsed if elapsed else 0.0,
         detected_person_boxes=detection_count,
         emitted_track_boxes=track_count,
         emitted_events=len(events),
     )
-    return VideoRunResult(events=events, metrics=metrics)
+    return VideoRunResult(events=events, incidents=incidents, evidence=evidence, metrics=metrics)
 
 
 def _annotate(
@@ -183,6 +217,8 @@ def main() -> None:
     parser.add_argument("--output-video", type=Path, required=True)
     parser.add_argument("--output-events", type=Path, required=True)
     parser.add_argument("--output-metrics", type=Path, required=True)
+    parser.add_argument("--output-incidents", type=Path)
+    parser.add_argument("--evidence-dir", type=Path)
     parser.add_argument("--model", choices=SUPPORTED_MODELS, default="ssdlite320")
     parser.add_argument("--confidence", type=float, default=0.5)
     parser.add_argument("--frame-stride", type=int, default=1)
@@ -209,6 +245,7 @@ def main() -> None:
         zone=zone,
         frame_stride=arguments.frame_stride,
         max_frames=arguments.max_frames,
+        evidence_dir=arguments.evidence_dir,
     )
     arguments.output_events.parent.mkdir(parents=True, exist_ok=True)
     arguments.output_events.write_text(json.dumps(result.events, indent=2) + "\n", encoding="utf-8")
@@ -216,6 +253,11 @@ def main() -> None:
     arguments.output_metrics.write_text(
         json.dumps(asdict(result.metrics), indent=2) + "\n", encoding="utf-8"
     )
+    if arguments.output_incidents:
+        arguments.output_incidents.parent.mkdir(parents=True, exist_ok=True)
+        arguments.output_incidents.write_text(
+            json.dumps(result.incidents, indent=2) + "\n", encoding="utf-8"
+        )
 
 
 def _video_properties(path: Path) -> tuple[int, int, float]:

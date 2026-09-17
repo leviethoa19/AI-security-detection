@@ -56,10 +56,28 @@ The controlled smoke benchmark selected SSDLite as the current baseline: 48.6 ms
 
 ## M3 — Temporal risk and incident evidence
 
+**Status:** Complete
+
+The event engine now processes observations incrementally, materializes versioned incident snapshots and timelines, and captures bounded pre/post-event evidence without changing the established risk semantics.
+
+- [x] Incremental frame-by-frame event processing
+- [x] Deterministic batch/stream equivalence
+- [x] Versioned incident snapshot contract in Python and TypeScript
+- [x] Active, escalated, and resolved incident materialization
+- [x] Risk peak, reason-code, component-version, and configuration snapshots
+- [x] Bounded rolling pre-event frame buffer
+- [x] One pre/post-event clip, thumbnail, and manifest per incident
+- [x] Duplicate evidence-trigger suppression
+- [x] Scenario coverage for entry, dwell, exit, re-entry, missing tracks, and duplicates
+
+Generated evidence remains local and excluded from Git. A short source ending before the configured post-event window is explicitly marked incomplete in its manifest.
+
+## M4 — High-risk-object evidence baseline
+
 **Status:** Next
 
-The next slice will make the replay engine incrementally streamable, add explicit incident snapshots and timelines, and introduce the rolling pre/post-event evidence buffer without changing risk semantics.
+The next slice will establish dataset provenance and measure a firearm-like-object baseline before deciding whether targeted fine-tuning is justified.
 
-## M4–M9
+## M5–M9
 
 Not started. See [PROJECT_PLAN.md](PROJECT_PLAN.md) and the approved detailed plan for their exit gates.

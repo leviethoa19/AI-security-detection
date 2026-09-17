@@ -50,6 +50,8 @@ def load_scenario(path: Path) -> ReplayScenario:
         configuration=ReplayConfiguration(
             dwell_threshold_ms=config.get("dwellThresholdMs", 2_000),
             resolution_grace_ms=config.get("resolutionGraceMs", 1_000),
+            evidence_pre_ms=config.get("evidencePreMs", 2_000),
+            evidence_post_ms=config.get("evidencePostMs", 2_000),
             detector_version=config.get("detectorVersion", "scripted-v1"),
             tracker_version=config.get("trackerVersion", "scripted-v1"),
             risk_engine_version=config.get("riskEngineVersion", "rules-v1"),
@@ -57,4 +59,3 @@ def load_scenario(path: Path) -> ReplayScenario:
         ),
         frames=frames,
     )
-
