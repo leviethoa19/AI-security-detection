@@ -26,7 +26,8 @@ dev = [
   "types-jsonschema>=4.23,<5",
 ]
 vision = [
-  "numpy>=2.0,<3",
+  # NumPy 2.5 stubs require a Python 3.12 type-syntax target; keep Python 3.11 support.
+  "numpy>=2.0,<2.5",
   "opencv-python>=5.0,<6",
   "torch>=2.8,<2.14",
   "torchvision>=0.23,<0.29",

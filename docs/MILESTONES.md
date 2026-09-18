@@ -74,7 +74,7 @@ Generated evidence remains local and excluded from Git. A short source ending be
 
 ## M4 — High-risk-object evidence baseline
 
-**Status:** In progress
+**Status:** Complete
 
 The firearm-only slice now has a replaceable open-vocabulary detector, person-track association, temporal persistence, threshold evaluation, and a provenance-preserving Open Images manifest builder.
 
@@ -85,9 +85,17 @@ The firearm-only slice now has a replaceable open-vocabulary detector, person-tr
 - [x] One-frame evidence regression test
 - [x] Threshold/IoU evaluation harness
 - [x] Open Images V7 class mapping and provenance manifest builder
-- [ ] Download the approved model and bounded evaluation subset
-- [ ] Measure threshold, latency, precision, recall, and failure groups
-- [ ] Decide whether M6 fine-tuning is justified
+- [x] Download the approved model and bounded evaluation subset
+- [x] Measure threshold, latency, precision, recall, and failure groups
+- [x] Decide that M6 supervised fine-tuning is justified
+
+The bounded baseline used 50 positive and 50 verified-negative Open Images validation
+images. After merging duplicate source labels and applying prompt-level NMS, threshold
+0.40 produced 0.718 precision, 0.670 recall, and 0.693 F1 at IoU 0.50. It detected at
+least one object in 42/50 positive images and fired on 1/50 negative images. CPU latency
+was not deployment-ready (24.0 s mean, 26.6 s P95), and review found weak small-object,
+occlusion, shotgun, and localization behavior. M6 will use supervised training and hard
+negative mining; see the experiment report for limitations.
 
 ## M5–M9
 

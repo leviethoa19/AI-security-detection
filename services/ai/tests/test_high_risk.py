@@ -9,6 +9,7 @@ from security_ai.domain import BoundingBox, HighRiskDetection, TrackObservation
 from security_ai.high_risk import (
     TransformersZeroShotFirearmDetector,
     associate_high_risk_evidence,
+    non_max_suppression,
 )
 
 
@@ -34,9 +35,7 @@ def test_zero_shot_adapter_maps_uncertain_predictions() -> None:
 
     detections = detector.detect(np.zeros((64, 64, 3), dtype=np.uint8))
 
-    assert detections == (
-        HighRiskDetection(BoundingBox(10, 20, 30, 40), 0.73, "firearm_like"),
-    )
+    assert detections == (HighRiskDetection(BoundingBox(10, 20, 30, 40), 0.73, "firearm_like"),)
 
 
 def test_association_selects_containing_person_track() -> None:
@@ -57,3 +56,15 @@ def test_uncontained_detection_is_not_associated() -> None:
     tracks = (TrackObservation("person", BoundingBox(0, 0, 30, 60)),)
 
     assert associate_high_risk_evidence(detections, tracks) == ()
+
+
+def test_nms_collapses_prompt_duplicates_and_keeps_distinct_objects() -> None:
+    detections = (
+        HighRiskDetection(BoundingBox(10, 10, 30, 30), 0.8),
+        HighRiskDetection(BoundingBox(11, 11, 31, 31), 0.7),
+        HighRiskDetection(BoundingBox(50, 50, 60, 60), 0.6),
+    )
+
+    selected = non_max_suppression(detections)
+
+    assert selected == (detections[0], detections[2])

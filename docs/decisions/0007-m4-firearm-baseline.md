@@ -1,6 +1,6 @@
 # ADR 0007: Firearm-like evidence baseline
 
-- **Status:** Accepted for baseline measurement
+- **Status:** Accepted as baseline; replacement training approved for M6
 - **Date:** 2026-09-17
 
 ## Decision
@@ -28,3 +28,16 @@ Use only the Open Images V7 validation split for the first bounded evaluation su
 ## Measurement gate
 
 This ADR selects what to measure, not a production model. The baseline is accepted only after the threshold sweep reports precision, recall, F1, latency, false-positive groups, and missed-object groups on the recorded manifest. Fine-tuning remains undecided until those errors are reviewed.
+
+## Measurement outcome
+
+The bounded experiment selected a confidence threshold of 0.40 after class-agnostic
+NMS. It reached 0.718 precision, 0.670 recall, and 0.693 F1 at IoU 0.50 on 91
+deduplicated firearm-like objects. At image level it detected evidence in 42 of 50
+positive images and produced evidence in 1 of 50 verified-negative images.
+
+This model remains a baseline rather than a production choice. Mean CPU inference was
+24.0 seconds per image, and error review exposed weak small-object, occlusion, shotgun,
+and localization behavior. M6 will therefore train or fine-tune a smaller supervised
+detector with hard-negative mining. The present subset remains development evidence;
+M6 must use image-ID-grouped training data and an untouched test split for final claims.

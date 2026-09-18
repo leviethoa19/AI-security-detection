@@ -48,19 +48,23 @@ class TransformersZeroShotFirearmDetector:
         self,
         model_name: str = "google/owlv2-base-patch16-ensemble",
         *,
-        confidence_threshold: float = 0.1,
+        confidence_threshold: float = 0.4,
         prompts: Sequence[str] = DEFAULT_FIREARM_PROMPTS,
         device: str = "cpu",
+        nms_iou_threshold: float = 0.5,
         predictor: Predictor | None = None,
     ) -> None:
         if not 0 <= confidence_threshold <= 1:
             raise ValueError("confidence_threshold must be in [0, 1]")
         if not prompts:
             raise ValueError("at least one firearm prompt is required")
+        if not 0 < nms_iou_threshold <= 1:
+            raise ValueError("nms_iou_threshold must be in (0, 1]")
         self._model_name = model_name
         self._confidence_threshold = confidence_threshold
         self._prompts = tuple(prompts)
         self._device = device
+        self._nms_iou_threshold = nms_iou_threshold
         self._predictor = predictor or self._load_predictor(model_name, device)
 
     @property
@@ -93,7 +97,7 @@ class TransformersZeroShotFirearmDetector:
                     label="firearm_like",
                 )
             )
-        return tuple(detections)
+        return non_max_suppression(tuple(detections), self._nms_iou_threshold)
 
     @staticmethod
     def _load_predictor(model_name: str, device: str) -> Predictor:
@@ -157,6 +161,31 @@ def associate_high_risk_evidence(
             )
         )
     return tuple(associated)
+
+
+def non_max_suppression(
+    detections: tuple[HighRiskDetection, ...],
+    iou_threshold: float = 0.5,
+) -> tuple[HighRiskDetection, ...]:
+    """Collapse prompt-level duplicates for the product's unified evidence class."""
+
+    if not 0 < iou_threshold <= 1:
+        raise ValueError("iou_threshold must be in (0, 1]")
+    selected: list[HighRiskDetection] = []
+    for detection in sorted(detections, key=lambda item: item.score, reverse=True):
+        if all(_box_iou(detection.box, kept.box) < iou_threshold for kept in selected):
+            selected.append(detection)
+    return tuple(selected)
+
+
+def _box_iou(left: BoundingBox, right: BoundingBox) -> float:
+    width = max(0.0, min(left.x2, right.x2) - max(left.x1, right.x1))
+    height = max(0.0, min(left.y2, right.y2) - max(left.y1, right.y1))
+    intersection = width * height
+    left_area = max(0.0, left.x2 - left.x1) * max(0.0, left.y2 - left.y1)
+    right_area = max(0.0, right.x2 - right.x1) * max(0.0, right.y2 - right.y1)
+    union = left_area + right_area - intersection
+    return intersection / union if union else 0.0
 
 
 def _expand(box: BoundingBox, margin: float) -> BoundingBox:

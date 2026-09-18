@@ -156,9 +156,7 @@ def process_video(
             if high_risk_detector is not None:
                 high_risk_started = perf_counter()
                 high_risk_detections = high_risk_detector.detect(typed_frame)
-                high_risk_detection_times_ms.append(
-                    (perf_counter() - high_risk_started) * 1_000
-                )
+                high_risk_detection_times_ms.append((perf_counter() - high_risk_started) * 1_000)
             associated_evidence = associate_high_risk_evidence(high_risk_detections, tracks)
             detection_count += len(detections)
             track_count += len(tracks)
@@ -274,7 +272,7 @@ def main() -> None:
     parser.add_argument("--model", choices=SUPPORTED_MODELS, default="ssdlite320")
     parser.add_argument("--confidence", type=float, default=0.5)
     parser.add_argument("--high-risk-model", choices=["owlv2-base"])
-    parser.add_argument("--high-risk-confidence", type=float, default=0.1)
+    parser.add_argument("--high-risk-confidence", type=float, default=0.4)
     parser.add_argument("--frame-stride", type=int, default=1)
     parser.add_argument("--max-frames", type=int)
     parser.add_argument(

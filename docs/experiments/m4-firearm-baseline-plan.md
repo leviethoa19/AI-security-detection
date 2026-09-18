@@ -11,6 +11,8 @@
 - Positive classes: Handgun, Rifle, Shotgun
 - Hard negatives: human-verified negative Weapon labels
 - Matching: greedy score order at IoU 0.50
+- Prediction post-processing: class-agnostic NMS at IoU 0.50
+- Unified-label ground truth: collapse source boxes overlapping at IoU 0.90
 - Threshold sweep: 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50
 
 ## Reproducibility rules
@@ -31,4 +33,5 @@
 - Failure groups such as small object, occlusion, depiction, low light, confusing handheld object, and unassociated object
 - Explicit `fine-tuning justified` or `fine-tuning not yet justified` conclusion
 
-No numeric quality claim is made until the approved external artifacts are downloaded and the experiment is run.
+The completed measurements and interpretation are recorded in
+[m4-firearm-baseline-results.md](m4-firearm-baseline-results.md).

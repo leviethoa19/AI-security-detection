@@ -65,8 +65,7 @@ def _evaluate_threshold(
         )
         for prediction in detected:
             candidates = [
-                (box_index, _iou(prediction.box, expected[box_index]))
-                for box_index in unmatched
+                (box_index, _iou(prediction.box, expected[box_index])) for box_index in unmatched
             ]
             if candidates:
                 best_index, best_iou = max(candidates, key=lambda item: item[1])
@@ -113,17 +112,31 @@ def main() -> None:
     parser.add_argument("--model", default="google/owlv2-base-patch16-ensemble")
     parser.add_argument("--thresholds", default="0.05,0.1,0.15,0.2,0.3,0.4,0.5")
     parser.add_argument("--iou", type=float, default=0.5)
+    parser.add_argument(
+        "--max-images",
+        type=int,
+        help="Evaluate only the first N manifest items (useful for smoke tests)",
+    )
     arguments = parser.parse_args()
 
     raw: dict[str, Any] = json.loads(arguments.manifest.read_text(encoding="utf-8"))
+    thresholds = tuple(float(value) for value in arguments.thresholds.split(","))
+    if not thresholds:
+        raise ValueError("at least one threshold is required")
+    if arguments.max_images is not None and arguments.max_images <= 0:
+        raise ValueError("max-images must be positive")
     detector = TransformersZeroShotFirearmDetector(
         model_name=arguments.model,
-        confidence_threshold=0.0,
+        confidence_threshold=min(thresholds),
     )
     ground_truth: dict[str, tuple[BoundingBox, ...]] = {}
     predictions: dict[str, tuple[HighRiskDetection, ...]] = {}
     latencies_ms: list[float] = []
-    for item in raw["items"]:
+    prediction_records: list[dict[str, Any]] = []
+    items = raw["items"]
+    if arguments.max_images is not None:
+        items = items[: arguments.max_images]
+    for index, item in enumerate(items, start=1):
         image_id = str(item["imageId"])
         image_path = arguments.manifest.parent / str(item["imagePath"])
         frame = cv2.imread(str(image_path))
@@ -131,14 +144,34 @@ def main() -> None:
             raise ValueError(f"could not read evaluation image: {image_path}")
         started = perf_counter()
         predictions[image_id] = detector.detect(cast(NDArray[np.uint8], frame))
-        latencies_ms.append((perf_counter() - started) * 1_000)
-        ground_truth[image_id] = tuple(
-            _annotation_box(annotation, width=frame.shape[1], height=frame.shape[0])
-            for annotation in item.get("annotations", [])
-            if annotation["label"] in {"Handgun", "Rifle", "Shotgun"}
+        latency_ms = (perf_counter() - started) * 1_000
+        latencies_ms.append(latency_ms)
+        ground_truth[image_id] = _deduplicate_boxes(
+            tuple(
+                _annotation_box(annotation, width=frame.shape[1], height=frame.shape[0])
+                for annotation in item.get("annotations", [])
+                if annotation["label"] in {"Handgun", "Rifle", "Shotgun"}
+            )
         )
+        prediction_records.append(
+            {
+                "imageId": image_id,
+                "latencyMs": latency_ms,
+                "width": frame.shape[1],
+                "height": frame.shape[0],
+                "groundTruth": item.get("annotations", []),
+                "predictions": [
+                    {
+                        "score": detection.score,
+                        "label": detection.label,
+                        "boxPixels": _box_values(detection.box),
+                    }
+                    for detection in predictions[image_id]
+                ],
+            }
+        )
+        print(f"evaluated {index}/{len(items)}: {image_id} ({latency_ms:.0f} ms)")
 
-    thresholds = tuple(float(value) for value in arguments.thresholds.split(","))
     metrics = evaluate_thresholds(
         ground_truth,
         predictions,
@@ -154,10 +187,9 @@ def main() -> None:
         "positiveImages": sum(bool(boxes) for boxes in ground_truth.values()),
         "negativeImages": sum(not boxes for boxes in ground_truth.values()),
         "meanLatencyMs": float(latency_values.mean()) if latency_values.size else 0.0,
-        "p95LatencyMs": (
-            float(np.percentile(latency_values, 95)) if latency_values.size else 0.0
-        ),
+        "p95LatencyMs": (float(np.percentile(latency_values, 95)) if latency_values.size else 0.0),
         "thresholds": [asdict(row) for row in metrics],
+        "predictionRecords": prediction_records,
     }
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     arguments.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
@@ -166,6 +198,20 @@ def main() -> None:
 def _annotation_box(annotation: dict[str, Any], *, width: int, height: int) -> BoundingBox:
     x1, y1, x2, y2 = (float(value) for value in annotation["boxNormalized"])
     return BoundingBox(x1 * width, y1 * height, x2 * width, y2 * height)
+
+
+def _box_values(box: BoundingBox) -> list[float]:
+    return [box.x1, box.y1, box.x2, box.y2]
+
+
+def _deduplicate_boxes(
+    boxes: tuple[BoundingBox, ...], *, iou_threshold: float = 0.9
+) -> tuple[BoundingBox, ...]:
+    selected: list[BoundingBox] = []
+    for box in boxes:
+        if all(_iou(box, kept) < iou_threshold for kept in selected):
+            selected.append(box)
+    return tuple(selected)
 
 
 if __name__ == "__main__":

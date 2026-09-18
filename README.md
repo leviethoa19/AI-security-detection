@@ -6,7 +6,7 @@ The project is intentionally more than a detector demo. Its core question is whe
 
 ## Current status
 
-Milestones 0–3 are complete. The system can replay scripted tracks and process prerecorded video with real person detection, ByteTrack identities, polygon zones, incremental temporal reasoning, incident deduplication, versioned incident snapshots, bounded evidence clips, overlays, and runtime measurements. Cloud credentials and private footage are not required.
+Milestones 0–4 are complete. The system can replay scripted tracks and process prerecorded video with real person detection, ByteTrack identities, polygon zones, incremental temporal reasoning, incident deduplication, versioned incident snapshots, bounded evidence clips, overlays, and runtime measurements. Its replaceable OWLv2 firearm-like baseline has also been measured on a provenance-preserving 100-image Open Images subset. Cloud credentials and private footage are not required.
 
 ## Planned system
 
@@ -92,6 +92,13 @@ python -m security_ai.video input.mp4 \
 ```
 
 The UI and records describe these outputs as potential firearm-like visual evidence. Risk 4 requires repeated evidence associated with a tracked person in an armed zone; a single frame is insufficient.
+
+The measured baseline selects confidence 0.40 with class-agnostic NMS. It is intentionally
+not a production claim: the 100-image experiment reached 0.718 precision, 0.670 recall,
+and 0.693 F1 at IoU 0.50, while mean CPU inference took 24.0 seconds per image. See
+[the M4 results](docs/experiments/m4-firearm-baseline-results.md) for the full threshold
+sweep, failure analysis, licensing boundaries, and the evidence-backed M6 fine-tuning
+decision.
 
 On Windows, clone to a short directory or create the virtual environment at a short path; large PyTorch wheels can exceed the legacy path-length limit in deeply nested directories.
 
