@@ -17,6 +17,7 @@ security-ai-video = "security_ai.video:main"
 security-ai-benchmark = "security_ai.benchmark:main"
 security-ai-high-risk-eval = "security_ai.high_risk_eval:main"
 security-ai-open-images-manifest = "security_ai.open_images:main"
+security-ai-evaluate = "security_ai.evaluation:main"
 
 [project.optional-dependencies]
 dev = [
@@ -36,6 +37,11 @@ vision = [
 high-risk = [
   "safetensors>=0.5,<1",
   "transformers>=4.49,<6",
+]
+evaluation = [
+  "matplotlib>=3.9,<4",
+  "pandas>=2.2,<4",
+  "scikit-learn>=1.6,<2",
 ]
 
 [tool.pytest.ini_options]
@@ -68,6 +74,12 @@ module = [
   "torchvision.models",
   "torchvision.models.detection",
   "torchvision.*",
+  "matplotlib",
+  "matplotlib.*",
+  "pandas",
+  "pandas.*",
+  "sklearn",
+  "sklearn.*",
 ]
 ignore_missing_imports = true
 

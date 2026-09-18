@@ -1,0 +1,11 @@
+{
+  "scenarioId": "transient-noise", "cameraId": "evaluation-camera", "startedAt": "2026-09-18T00:03:00Z", "armed": true,
+  "zone": { "zoneId": "protected", "polygon": [[50, 50], [100, 50], [100, 100], [50, 100]] },
+  "configuration": { "highRiskWindowMs": 1500, "highRiskMinPositiveFrames": 3, "highRiskMinMeanScore": 0.4, "configurationVersion": "evaluation-temporal-v1" },
+  "frames": [
+    { "sourceTimeMs": 0, "tracks": [{ "trackId": "person-1", "box": [60, 20, 80, 70] }], "highRiskEvidence": [{ "trackId": "person-1", "box": [65, 35, 75, 45], "score": 0.88 }] },
+    { "sourceTimeMs": 500, "tracks": [{ "trackId": "person-1", "box": [60, 20, 80, 70] }] },
+    { "sourceTimeMs": 1000, "tracks": [{ "trackId": "person-1", "box": [60, 20, 80, 70] }] },
+    { "sourceTimeMs": 4000, "tracks": [] }
+  ]
+}

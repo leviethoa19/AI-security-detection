@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "datasetId": "controlled-temporal-v1",
+  "description": "Controlled event-semantics evaluation fixture",
+  "eventTypes": ["high_risk_evidence"],
+  "scenarios": [
+    {
+      "scenarioId": "persistent-evidence",
+      "scenarioPath": "scenarios/persistent-evidence.json",
+      "split": "test",
+      "splitGroup": "persistent-evidence",
+      "durationMs": 4000,
+      "subgroups": { "lighting": "bright", "occlusion": "none" },
+      "groundTruth": [
+        {
+          "eventType": "high_risk_evidence",
+          "trackId": "person-1",
+          "onsetTimeMs": 0,
+          "windowEndMs": 1500
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://security-ai.local/schema/evaluation-manifest.v1.schema.json",
+  "title": "Evaluation Manifest V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "datasetId", "eventTypes", "scenarios"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "datasetId": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "eventTypes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["zone_intrusion", "extended_presence", "high_risk_evidence"]
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/scenario" }
+    }
+  },
+  "$defs": {
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenarioId", "scenarioPath", "split", "splitGroup", "durationMs",
+        "subgroups", "groundTruth"
+      ],
+      "properties": {
+        "scenarioId": { "type": "string", "minLength": 1 },
+        "scenarioPath": { "type": "string", "minLength": 1 },
+        "split": { "enum": ["train", "validation", "test"] },
+        "splitGroup": { "type": "string", "minLength": 1 },
+        "durationMs": { "type": "integer", "minimum": 1 },
+        "subgroups": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        },
+        "groundTruth": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/groundTruthEvent" }
+        }
+      }
+    },
+    "groundTruthEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eventType", "trackId", "onsetTimeMs", "windowEndMs"],
+      "properties": {
+        "eventType": {
+          "enum": ["zone_intrusion", "extended_presence", "high_risk_evidence"]
+        },
+        "trackId": { "type": "string", "minLength": 1 },
+        "onsetTimeMs": { "type": "integer", "minimum": 0 },
+        "windowEndMs": { "type": "integer", "minimum": 0 },
+        "failureCategory": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

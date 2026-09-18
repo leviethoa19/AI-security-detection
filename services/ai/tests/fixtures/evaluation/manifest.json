@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "datasetId": "controlled-temporal-v1",
+  "description": "Scripted high-risk event semantics with leakage-safe scenario groups",
+  "eventTypes": ["high_risk_evidence"],
+  "scenarios": [
+    {
+      "scenarioId": "persistent-clear",
+      "scenarioPath": "scenarios/persistent-clear.json",
+      "split": "test",
+      "splitGroup": "persistent-clear",
+      "durationMs": 4000,
+      "subgroups": { "lighting": "bright", "occlusion": "none", "evidencePattern": "persistent" },
+      "groundTruth": [{ "eventType": "high_risk_evidence", "trackId": "person-1", "onsetTimeMs": 0, "windowEndMs": 1500 }]
+    },
+    {
+      "scenarioId": "persistent-gap",
+      "scenarioPath": "scenarios/persistent-gap.json",
+      "split": "test",
+      "splitGroup": "persistent-gap",
+      "durationMs": 4000,
+      "subgroups": { "lighting": "mixed", "occlusion": "partial", "evidencePattern": "persistent_with_gap" },
+      "groundTruth": [{ "eventType": "high_risk_evidence", "trackId": "person-1", "onsetTimeMs": 0, "windowEndMs": 1500 }]
+    },
+    {
+      "scenarioId": "persistent-low-confidence",
+      "scenarioPath": "scenarios/persistent-low-confidence.json",
+      "split": "test",
+      "splitGroup": "persistent-low-confidence",
+      "durationMs": 4000,
+      "subgroups": { "lighting": "low", "occlusion": "partial", "evidencePattern": "persistent" },
+      "groundTruth": [{ "eventType": "high_risk_evidence", "trackId": "person-1", "onsetTimeMs": 0, "windowEndMs": 1500 }]
+    },
+    {
+      "scenarioId": "transient-noise",
+      "scenarioPath": "scenarios/transient-noise.json",
+      "split": "test",
+      "splitGroup": "transient-noise",
+      "durationMs": 4000,
+      "subgroups": { "lighting": "bright", "occlusion": "none", "evidencePattern": "transient" },
+      "groundTruth": []
+    },
+    {
+      "scenarioId": "sparse-noise",
+      "scenarioPath": "scenarios/sparse-noise.json",
+      "split": "test",
+      "splitGroup": "sparse-noise",
+      "durationMs": 4000,
+      "subgroups": { "lighting": "mixed", "occlusion": "none", "evidencePattern": "sparse" },
+      "groundTruth": []
+    },
+    {
+      "scenarioId": "no-evidence",
+      "scenarioPath": "scenarios/no-evidence.json",
+      "split": "test",
+      "splitGroup": "no-evidence",
+      "durationMs": 4000,
+      "subgroups": { "lighting": "low", "occlusion": "none", "evidencePattern": "none" },
+      "groundTruth": []
+    }
+  ]
+}

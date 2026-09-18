@@ -6,7 +6,7 @@ The project is intentionally more than a detector demo. Its core question is whe
 
 ## Current status
 
-Milestones 0–4 are complete. The system can replay scripted tracks and process prerecorded video with real person detection, ByteTrack identities, polygon zones, incremental temporal reasoning, incident deduplication, versioned incident snapshots, bounded evidence clips, overlays, and runtime measurements. Its replaceable OWLv2 firearm-like baseline has also been measured on a provenance-preserving 100-image Open Images subset. Cloud credentials and private footage are not required.
+Milestones 0–5 are complete. The system can replay scripted tracks and process prerecorded video with real person detection, ByteTrack identities, polygon zones, incremental temporal reasoning, incident deduplication, versioned incident snapshots, bounded evidence clips, overlays, and runtime measurements. Its replaceable OWLv2 firearm-like baseline has been measured on a provenance-preserving 100-image Open Images subset, and its event evaluator compares frame and temporal behavior from one reproducible command. Cloud credentials and private footage are not required.
 
 ## Planned system
 
@@ -92,6 +92,19 @@ python -m security_ai.video input.mp4 \
 ```
 
 The UI and records describe these outputs as potential firearm-like visual evidence. Risk 4 requires repeated evidence associated with a tracked person in an armed zone; a single frame is insufficient.
+
+Install the evaluation dependencies and reproduce the controlled event study:
+
+```sh
+python -m pip install -e "services/ai[dev,vision,evaluation]"
+python -m security_ai.evaluation \
+  services/ai/tests/fixtures/evaluation/manifest.json \
+  --output-dir work/m5-controlled-study
+```
+
+The command writes prediction and outcome CSVs, aggregate and subgroup metrics, a JSON
+configuration snapshot, a Markdown error report, and a comparison plot. Generated files
+under `work/` are excluded from Git.
 
 The measured baseline selects confidence 0.40 with class-agnostic NMS. It is intentionally
 not a production claim: the 100-image experiment reached 0.718 precision, 0.670 recall,

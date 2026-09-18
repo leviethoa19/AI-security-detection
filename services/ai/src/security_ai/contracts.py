@@ -19,15 +19,9 @@ def _repository_root() -> Path:
     return Path(__file__).resolve().parents[4]
 
 
-@lru_cache(maxsize=2)
+@lru_cache(maxsize=3)
 def _validator(schema_name: str) -> Draft202012Validator:
-    schema_path = (
-        _repository_root()
-        / "packages"
-        / "contracts"
-        / "schema"
-        / schema_name
-    )
+    schema_path = _repository_root() / "packages" / "contracts" / "schema" / schema_name
     schema: dict[str, Any] = json.loads(schema_path.read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(schema)
     return Draft202012Validator(schema, format_checker=FormatChecker())
@@ -52,4 +46,15 @@ def validate_incident_snapshot(value: object) -> None:
     except ValidationError as error:
         location = ".".join(str(part) for part in error.absolute_path) or "<root>"
         message = f"invalid incident snapshot at {location}: {error.message}"
+        raise ContractValidationError(message) from error
+
+
+def validate_evaluation_manifest(value: object) -> None:
+    """Validate the leakage-aware event evaluation manifest."""
+
+    try:
+        _validator("evaluation-manifest.v1.schema.json").validate(value)
+    except ValidationError as error:
+        location = ".".join(str(part) for part in error.absolute_path) or "<root>"
+        message = f"invalid evaluation manifest at {location}: {error.message}"
         raise ContractValidationError(message) from error

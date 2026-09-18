@@ -2,7 +2,7 @@
 
 ## Product, Architecture, and Delivery Plan
 
-**Status:** Approved direction; implementation has not started  
+**Status:** Approved direction; milestones M0–M5 complete
 **Primary goal:** Build a portfolio-quality, $0-first prototype that turns indoor video into explainable security incidents using computer vision, tracking, temporal reasoning, risk assessment, evaluation, a secure backend, and a simple mobile client.
 
 ## 1. Product definition

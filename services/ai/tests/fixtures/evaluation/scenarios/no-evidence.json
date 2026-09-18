@@ -1,0 +1,10 @@
+{
+  "scenarioId": "no-evidence", "cameraId": "evaluation-camera", "startedAt": "2026-09-18T00:05:00Z", "armed": true,
+  "zone": { "zoneId": "protected", "polygon": [[50, 50], [100, 50], [100, 100], [50, 100]] },
+  "configuration": { "highRiskWindowMs": 1500, "highRiskMinPositiveFrames": 3, "highRiskMinMeanScore": 0.4, "configurationVersion": "evaluation-temporal-v1" },
+  "frames": [
+    { "sourceTimeMs": 0, "tracks": [{ "trackId": "person-1", "box": [60, 20, 80, 70] }] },
+    { "sourceTimeMs": 1000, "tracks": [{ "trackId": "person-1", "box": [60, 20, 80, 70] }] },
+    { "sourceTimeMs": 4000, "tracks": [] }
+  ]
+}

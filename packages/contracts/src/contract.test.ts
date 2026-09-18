@@ -3,13 +3,20 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { validateIncidentEvent, validateIncidentSnapshot } from "./index.js";
+import {
+  validateEvaluationManifest,
+  validateIncidentEvent,
+  validateIncidentSnapshot,
+} from "./index.js";
 
 const fixturePath = fileURLToPath(
   new URL("../fixtures/incident-event.v1.valid.json", import.meta.url),
 );
 const snapshotFixturePath = fileURLToPath(
   new URL("../fixtures/incident-snapshot.v1.valid.json", import.meta.url),
+);
+const evaluationFixturePath = fileURLToPath(
+  new URL("../fixtures/evaluation-manifest.v1.valid.json", import.meta.url),
 );
 
 test("validates the shared v1 incident fixture", () => {
@@ -45,5 +52,11 @@ test("rejects out-of-range risk", () => {
 test("validates the shared v1 incident snapshot fixture", () => {
   const value: unknown = JSON.parse(readFileSync(snapshotFixturePath, "utf8"));
   const result = validateIncidentSnapshot(value);
+  assert.equal(result.valid, true, JSON.stringify(result.errors));
+});
+
+test("validates the shared v1 evaluation manifest fixture", () => {
+  const value: unknown = JSON.parse(readFileSync(evaluationFixturePath, "utf8"));
+  const result = validateEvaluationManifest(value);
   assert.equal(result.valid, true, JSON.stringify(result.errors));
 });

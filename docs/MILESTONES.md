@@ -97,6 +97,28 @@ was not deployment-ready (24.0 s mean, 26.6 s P95), and review found weak small-
 occlusion, shotgun, and localization behavior. M6 will use supervised training and hard
 negative mining; see the experiment report for limitations.
 
-## M5–M9
+## M5 — Evaluation and error-analysis system
+
+**Status:** Complete
+
+One documented command now runs leakage-aware scenario manifests through the production
+replay engine, compares frame and temporal variants, matches event windows, and emits
+JSON, CSV, Markdown, and PNG artifacts.
+
+- [x] Versioned event ground-truth and dataset manifest contract
+- [x] Leakage-safe split-group validation
+- [x] Batch replay through the production event engine
+- [x] Pandas tables and subgroup analysis
+- [x] Scikit-learn precision, recall, and F1
+- [x] Detection delay, false-alert-rate, duplicate, and failure-category output
+- [x] Frame baseline versus temporal-system controlled study
+- [x] Single-command reproducibility and regression test
+
+The six-scenario controlled study improved event precision from 0.60 to 1.00 while
+retaining recall of 1.00 and eliminating two transient/sparse false alerts. Mean escalation
+delay increased from 0 to 1.17 seconds. These are semantics-test results, not real-world
+accuracy claims.
+
+## M6–M9
 
 Not started. See [PROJECT_PLAN.md](PROJECT_PLAN.md) and the approved detailed plan for their exit gates.

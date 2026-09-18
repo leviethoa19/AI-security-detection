@@ -2,6 +2,7 @@ import Ajv2020, { type ErrorObject } from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import incidentEventSchema from "../schema/incident-event.v1.schema.json" with { type: "json" };
 import incidentSnapshotSchema from "../schema/incident-snapshot.v1.schema.json" with { type: "json" };
+import evaluationManifestSchema from "../schema/evaluation-manifest.v1.schema.json" with { type: "json" };
 
 export type EventType =
   | "person_observed"
@@ -84,10 +85,33 @@ export interface IncidentSnapshotV1 {
   };
 }
 
+export interface EvaluationManifestV1 {
+  schemaVersion: "1.0";
+  datasetId: string;
+  description?: string;
+  eventTypes: Array<"zone_intrusion" | "extended_presence" | "high_risk_evidence">;
+  scenarios: Array<{
+    scenarioId: string;
+    scenarioPath: string;
+    split: "train" | "validation" | "test";
+    splitGroup: string;
+    durationMs: number;
+    subgroups: Record<string, string>;
+    groundTruth: Array<{
+      eventType: "zone_intrusion" | "extended_presence" | "high_risk_evidence";
+      trackId: string;
+      onsetTimeMs: number;
+      windowEndMs: number;
+      failureCategory?: string;
+    }>;
+  }>;
+}
+
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats(ajv);
 const validateEvent = ajv.compile<IncidentEventV1>(incidentEventSchema);
 const validateSnapshot = ajv.compile<IncidentSnapshotV1>(incidentSnapshotSchema);
+const validateEvaluation = ajv.compile<EvaluationManifestV1>(evaluationManifestSchema);
 
 export interface ValidationResult {
   valid: boolean;
@@ -102,4 +126,9 @@ export function validateIncidentEvent(value: unknown): ValidationResult {
 export function validateIncidentSnapshot(value: unknown): ValidationResult {
   const valid = validateSnapshot(value);
   return { valid, errors: validateSnapshot.errors ? [...validateSnapshot.errors] : [] };
+}
+
+export function validateEvaluationManifest(value: unknown): ValidationResult {
+  const valid = validateEvaluation(value);
+  return { valid, errors: validateEvaluation.errors ? [...validateEvaluation.errors] : [] };
 }

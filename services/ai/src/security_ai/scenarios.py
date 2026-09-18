@@ -9,6 +9,7 @@ from typing import Any
 from security_ai.domain import (
     BoundingBox,
     FrameObservation,
+    HighRiskEvidenceObservation,
     Point,
     ReplayConfiguration,
     ReplayScenario,
@@ -29,6 +30,15 @@ def load_scenario(path: Path) -> ReplayScenario:
                     box=BoundingBox(*track["box"]),
                 )
                 for track in frame["tracks"]
+            ),
+            high_risk_evidence=tuple(
+                HighRiskEvidenceObservation(
+                    track_id=evidence["trackId"],
+                    box=BoundingBox(*evidence["box"]),
+                    score=evidence["score"],
+                    label=evidence.get("label", "firearm_like"),
+                )
+                for evidence in frame.get("highRiskEvidence", [])
             ),
         )
         for frame in raw["frames"]

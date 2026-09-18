@@ -7,24 +7,18 @@ import pytest
 
 from security_ai.contracts import (
     ContractValidationError,
+    validate_evaluation_manifest,
     validate_incident_event,
     validate_incident_snapshot,
 )
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
-FIXTURE = (
-    REPOSITORY_ROOT
-    / "packages"
-    / "contracts"
-    / "fixtures"
-    / "incident-event.v1.valid.json"
-)
+FIXTURE = REPOSITORY_ROOT / "packages" / "contracts" / "fixtures" / "incident-event.v1.valid.json"
 SNAPSHOT_FIXTURE = (
-    REPOSITORY_ROOT
-    / "packages"
-    / "contracts"
-    / "fixtures"
-    / "incident-snapshot.v1.valid.json"
+    REPOSITORY_ROOT / "packages" / "contracts" / "fixtures" / "incident-snapshot.v1.valid.json"
+)
+EVALUATION_FIXTURE = (
+    REPOSITORY_ROOT / "packages" / "contracts" / "fixtures" / "evaluation-manifest.v1.valid.json"
 )
 
 
@@ -38,6 +32,10 @@ def test_shared_fixture_is_valid() -> None:
 
 def test_shared_snapshot_fixture_is_valid() -> None:
     validate_incident_snapshot(json.loads(SNAPSHOT_FIXTURE.read_text(encoding="utf-8")))
+
+
+def test_shared_evaluation_fixture_is_valid() -> None:
+    validate_evaluation_manifest(json.loads(EVALUATION_FIXTURE.read_text(encoding="utf-8")))
 
 
 def test_out_of_range_risk_is_rejected() -> None:

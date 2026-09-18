@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: python -m pip install -e "services/ai[dev,vision]"
+      - run: python -m pip install -e "services/ai[dev,vision,evaluation]"
       - run: python -m ruff check services/ai
       - run: python -m mypy --config-file services/ai/pyproject.toml services/ai/src
       - run: python -m pytest services/ai/tests
